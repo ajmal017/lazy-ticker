@@ -1,0 +1,19 @@
+[[source]]
+url = "https://pypi.python.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+logme = "*"
+python-decouple = "*"
+
+[dev-packages]
+black = "==19.10.b0"
+nox = "*"
+pytest-watch = "*"
+
+[requires]
+python_version = "3.8"
+
+[pipenv]
+allow_prereleases = false
