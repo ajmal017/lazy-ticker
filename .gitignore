@@ -97,5 +97,5 @@ pytest.ini
 # project specific
 token.pickle
 secrets.ini
-chromedriver_linux64
+chromedriver_linux64.zip
 chromedriver
