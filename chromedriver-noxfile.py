@@ -4,6 +4,7 @@ import urllib.error
 import subprocess
 from pathlib import Path
 
+# TODO: create bin directory for chromedriver
 PROJECT_ROOT = Path(__file__).parent
 
 VERSION_URL = "https://chromedriver.storage.googleapis.com/LATEST_RELEASE"
