@@ -93,3 +93,7 @@ ENV/
 
 # dgnsrekt custom
 pytest.ini
+
+# project specific
+token.pickle
+secrets.ini
