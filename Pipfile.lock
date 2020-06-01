@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "9864876d6d32c62627f265454218e78b43e44d1e12d889f6a18625f1bfe88939"
+            "sha256": "1d446e6227e8689bba7dbc4f4f8a629e82f72ce5ab3bad1a9c87e05b5db59d46"
         },
         "pipfile-spec": 6,
         "requires": {
@@ -253,6 +253,9 @@
                 "sha256:e5f2585afccbff22390cddac29849df463b252b711aa2ce7c5f3f342a5b3b444"
             ],
             "version": "==5.1.1"
+        },
+        "twitter-scraper": {
+            "git": "https://github.com/bisguzar/twitter-scraper.git"
         },
         "urllib3": {
             "hashes": [

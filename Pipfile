@@ -23,3 +23,6 @@ python_version = "3.8"
 
 [pipenv]
 allow_prereleases = false
+
+[packages.twitter-scraper]
+git = "https://github.com/bisguzar/twitter-scraper.git"
