@@ -35,7 +35,7 @@ from decimal import Decimal
 from datetime import datetime
 from typing import List
 
-from sqlalchemy import Column, Integer, BigInteger, String, DateTime, Numeric
+from sqlalchemy import Column, Integer, BigInteger, String, DateTime, Numeric, UniqueConstraint
 from sqlalchemy.ext.declarative import declarative_base
 
 Base = declarative_base()
@@ -53,6 +53,8 @@ class ChartData(Base):
     LOW_PRICE = Column(Numeric)
     CLOSE_PRICE = Column(Numeric)
     VOLUME = Column(Numeric)
+
+    __table_args__ = (UniqueConstraint("CHART_TIME", "key"),)
 
 
 class ChartTick(BaseModel):
@@ -75,6 +77,7 @@ class ChartFuturesResponse(BaseModel):
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
+from sqlalchemy import exc
 
 engine = create_engine(DATABASE_URI, echo=True)
 ChartData.metadata.create_all(engine)
@@ -88,8 +91,11 @@ def insert(response: ChartFuturesResponse):
     print(response.timestamp)
     for candle in response.content:
         record = ChartData(**candle.dict())
-        session.add(record)
-    session.commit()
+        try:
+            session.add(record)
+            session.commit()
+        except exc.IntegrityError as e:
+            session.rollback()
 
 
 async def read_stream():
