@@ -85,7 +85,6 @@ class Instrument(BaseModel):
 @validate_arguments
 def insert(instrument: Instrument):
     print(instrument)
-    print(instrument.json())
 
 
 r = verify_ticker(search)

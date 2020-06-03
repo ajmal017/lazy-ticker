@@ -29,12 +29,42 @@ SYMBOLS = ["/MES", "/ES", "/GC", "/NQ", "/RTY", "/EMD", "/YM", "/NKD", "/VX", "/
 ENERGY = ["/QG", "/RB", "/HO", "/CL", "/NG", "/QM", "/BZ"]
 
 
+from pydantic import BaseModel, validate_arguments
+from decimal import Decimal
+from datetime import datetime
+from typing import List
+
+
+class ChartTick(BaseModel):
+    seq: int
+    key: str  # "/RB",
+    CHART_TIME: int  # 1591148220000,
+    OPEN_PRICE: Decimal  # 1.1257000000000001,
+    HIGH_PRICE: Decimal  # 1.1257000000000001,
+    LOW_PRICE: Decimal  # 1.1252,
+    CLOSE_PRICE: Decimal  # 1.1252,
+    VOLUME: Decimal  # 2.0
+
+
+class ChartFuturesResponse(BaseModel):
+    service: str
+    timestamp: datetime
+    command: str
+    content: List[ChartTick]
+
+
+@validate_arguments
+def insert(response: ChartFuturesResponse):
+    for candle in response.content:
+        print(candle.json())
+
+
 async def read_stream():
     await stream_client.login()
     await stream_client.quality_of_service(StreamClient.QOSLevel.EXPRESS)
 
     await stream_client.chart_futures_subs(SYMBOLS + ENERGY)
-    stream_client.add_chart_futures_handler(lambda msg: print(json.dumps(msg, indent=4)))
+    stream_client.add_chart_futures_handler(lambda msg: insert(msg))
 
     while True:
         await stream_client.handle_message()
