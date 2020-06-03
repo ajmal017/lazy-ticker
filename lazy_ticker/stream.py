@@ -91,12 +91,13 @@ def insert(response: ChartFuturesResponse):
     print(response.timestamp)
     for candle in response.content:
         record = ChartData(**candle.dict())
-        print(".", flush=True, end="")
         try:
             session.add(record)
             session.commit()
+            print("c", flush=True, end="")
         except exc.IntegrityError as e:
             session.rollback()
+            print("r", flush=True, end="")
     else:
         print()
 
