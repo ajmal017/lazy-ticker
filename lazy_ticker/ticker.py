@@ -52,35 +52,40 @@ from pydantic import BaseModel, validator, validate_arguments
 from typing import List
 from pprint import pprint as print
 
+from enum import Enum
+
+
+class AssetType(str, Enum):
+    EQUITY = "EQUITY"
+    ETF = "ETF"
+    FOREX = "FOREX"
+    FUTURE = "FUTURE"
+    FUTURE_OPTION = "FUTURE_OPTION"
+    INDEX = "INDEX"
+    INDICATOR = "INDICATOR"
+    MUTUAL_FUND = "MUTUAL_FUND"
+    OPTION = "OPTION"
+    UNKNOWN = "UNKNOWN"
+
+
+class Exchange(str, Enum):
+    NYSE = "NYSE"
+    NASDAQ = "NASDAQ"
+    PACIFIC = "Pacific"
+
 
 class Instrument(BaseModel):
     cusip: str
     symbol: str
     description: str
-    exchange: str
-    assetType: str
-
-    @validator("assetType")
-    def check_asset_type(cls, assetType):
-        if assetType not in (
-            "EQUITY",
-            "ETF",
-            "FOREX",
-            "FUTURE",
-            "FUTURE_OPTION",
-            "INDEX",
-            "INDICATOR",
-            "MUTUAL_FUND",
-            "OPTION",
-            "UNKNOWN",
-        ):
-            raise ValueError(f"{assetType} is an invalid asset type.")
-        return assetType
+    exchange: Exchange
+    assetType: AssetType
 
 
 @validate_arguments
 def insert(instrument: Instrument):
     print(instrument)
+    print(instrument.json())
 
 
 r = verify_ticker(search)
