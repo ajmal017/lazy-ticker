@@ -79,7 +79,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy import exc
 
-engine = create_engine(DATABASE_URI, echo=True)
+engine = create_engine(DATABASE_URI, echo=False)
 ChartData.metadata.create_all(engine)
 Session = sessionmaker(bind=engine)
 session = Session()
@@ -91,11 +91,14 @@ def insert(response: ChartFuturesResponse):
     print(response.timestamp)
     for candle in response.content:
         record = ChartData(**candle.dict())
+        print(".", flush=True, end="")
         try:
             session.add(record)
             session.commit()
         except exc.IntegrityError as e:
             session.rollback()
+    else:
+        print()
 
 
 async def read_stream():
