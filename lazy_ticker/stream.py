@@ -12,6 +12,7 @@ TD_AMERITRADE_API_KEY = config("TD_AMERITRADE_API_KEY")
 TD_AMERITRADE_REDIRECT_URI = config("TD_AMERITRADE_REDIRECT_URI")
 TD_AMERITRADE_ACCOUNT_NUMBER = config("TD_AMERITRADE_ACCOUNT_NUMBER")
 CHROMEDRIVER_LOCATION = config("CHROMEDRIVER_LOCATION", LOCAL_CHROMEDRIVER_LOCATION)
+DATABASE_URI = config("DATABASE_URI")
 
 try:
     api = auth.client_from_token_file(TOKEN_PATH, TD_AMERITRADE_API_KEY)
@@ -34,11 +35,30 @@ from decimal import Decimal
 from datetime import datetime
 from typing import List
 
+from sqlalchemy import Column, Integer, BigInteger, String, DateTime, Numeric
+from sqlalchemy.ext.declarative import declarative_base
+
+Base = declarative_base()
+
+
+class ChartData(Base):
+
+    __tablename__ = "chartdata"
+    id = Column(Integer, index=True, primary_key=True, autoincrement=True)
+    seq = Column(BigInteger, nullable=False)
+    key = Column(String(length=16), nullable=False)
+    CHART_TIME = Column(DateTime)
+    OPEN_PRICE = Column(Numeric)
+    HIGH_PRICE = Column(Numeric)
+    LOW_PRICE = Column(Numeric)
+    CLOSE_PRICE = Column(Numeric)
+    VOLUME = Column(Numeric)
+
 
 class ChartTick(BaseModel):
     seq: int
     key: str  # "/RB",
-    CHART_TIME: int  # 1591148220000,
+    CHART_TIME: datetime  # 1591148220000,
     OPEN_PRICE: Decimal  # 1.1257000000000001,
     HIGH_PRICE: Decimal  # 1.1257000000000001,
     LOW_PRICE: Decimal  # 1.1252,
@@ -53,13 +73,27 @@ class ChartFuturesResponse(BaseModel):
     content: List[ChartTick]
 
 
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+
+engine = create_engine(DATABASE_URI, echo=True)
+ChartData.metadata.create_all(engine)
+Session = sessionmaker(bind=engine)
+session = Session()
+
+
 @validate_arguments
 def insert(response: ChartFuturesResponse):
+    print(response.service)
+    print(response.timestamp)
     for candle in response.content:
-        print(candle.json())
+        record = ChartData(**candle.dict())
+        session.add(record)
+    session.commit()
 
 
 async def read_stream():
+
     await stream_client.login()
     await stream_client.quality_of_service(StreamClient.QOSLevel.EXPRESS)
 

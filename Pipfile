@@ -9,11 +9,12 @@ python-decouple = "*"
 fastapi = "*"
 uvicorn = "*"
 tda-api = "*"
-sqlalchemy = "*"
+SQLAlchemy = "*"
 luigi = "*"
 requests = "*"
 uplink = "*"
 pydantic = "*"
+psycopg2-binary = "*"
 
 [dev-packages]
 black = "==19.10.b0"
