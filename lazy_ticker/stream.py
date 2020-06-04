@@ -91,7 +91,7 @@ def insert(response: ChartFuturesResponse):
     print(response.timestamp)
     for candle in response.content:
         record = ChartData(**candle.dict())
-        print(".", flush=True, end="")
+        # print(".", flush=True, end="")
         try:
             session.add(record)
             session.commit()
