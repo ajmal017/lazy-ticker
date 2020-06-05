@@ -22,7 +22,7 @@ except FileNotFoundError:
 # NOTE: Think about a max chunking
 
 DATABASE = ["AAP"]
-search = ["AAPL", "TSLA", "GE", "SPY"]
+search = ["AAPL", "TSLA", "GE", "SPY", "FCEL"]
 
 
 def filter_database(tickers):
@@ -48,7 +48,7 @@ def verify_ticker(tickers):
     return response.json()
 
 
-from pydantic import BaseModel, validator, validate_arguments
+from pydantic import BaseModel, validator, validate_arguments, Field
 from typing import List
 from pprint import pprint as print
 
@@ -79,7 +79,7 @@ class Instrument(BaseModel):
     symbol: str
     description: str
     exchange: Exchange
-    assetType: AssetType
+    asset_type: AssetType = Field(alias="assetType")
 
 
 @validate_arguments

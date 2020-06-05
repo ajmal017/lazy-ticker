@@ -15,6 +15,8 @@ requests = "*"
 uplink = "*"
 pydantic = "*"
 psycopg2-binary = "*"
+pandas = "*"
+plotly = "*"
 
 [dev-packages]
 black = "==19.10.b0"
