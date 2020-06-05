@@ -17,9 +17,3 @@ class LazyDB:
         Base.metadata.create_all(engine)
         Session = sessionmaker(bind=engine)
         yield Session
-
-
-from decouple import config
-
-with LazyDB.connect(config("DATABASE_URI")) as db:
-    print(db)

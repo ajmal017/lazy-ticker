@@ -22,6 +22,8 @@ class Exchange(str, Enum):
     NYSE = "NYSE"
     NASDAQ = "NASDAQ"
     PACIFIC = "Pacific"
+    PINK = "Pink Sheet"
+    UNKOWN = "Unknown"
 
 
 class Instrument(pydantic.BaseModel):

@@ -5,6 +5,7 @@ from decouple import config
 from schema import Instrument
 from typing import List
 from pydantic import validate_arguments
+from pydantic.error_wrappers import ValidationError
 
 TOKEN_PATH = PROJECT_ROOT / "token.pickle"
 TD_AMERITRADE_API_KEY = config("TD_AMERITRADE_API_KEY")
@@ -37,7 +38,11 @@ def get_instruments(symbols: List[str]) -> List[Instrument]:
 
     assert response.ok, response.raise_for_status()
     json = response.json()
-    return [Instrument(**value) for value in json.values()]
+    try:
+        return [Instrument(**value) for value in json.values()]
+    except ValidationError as e:
+        print(json)
+        raise e
 
 
 if __name__ == "__main__":
