@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "4308847773f36addb4f55494923ab7520b92e15e11f8db3054c981b3e926598e"
+            "sha256": "f218a187fa3fa8b7afdbbb547ab88529c31ee531e196f0b56686897d399e3fcf"
         },
         "pipfile-spec": 6,
         "requires": {
@@ -342,11 +342,11 @@
         },
         "tda-api": {
             "hashes": [
-                "sha256:9da534bbdbbc02265295b472418ca538c9ec2f5c977ad3b2af86172af6d0a72b",
-                "sha256:d43f42772e77d9394cd4826532aed813715cece1b813d0e8110fa62c65f36036"
+                "sha256:20c49baf7aeeb2e0d8863028d1140e5888d04dc19998abd99f42a68da427733d",
+                "sha256:258d961572868111b682afbbfc3eb3c198ee34aa5f8a7dbe9dca7f3b2011ecbd"
             ],
             "index": "pypi",
-            "version": "==0.2.1"
+            "version": "==0.2.2"
         },
         "tornado": {
             "hashes": [
@@ -362,6 +362,14 @@
         },
         "twitter-scraper": {
             "git": "https://github.com/bisguzar/twitter-scraper.git"
+        },
+        "typer": {
+            "hashes": [
+                "sha256:9b66756dfcc9e9f829a33f9019757225af0c8e87e1e692f103556335d5ae3b25",
+                "sha256:a8c49418f20c1d1b04a34424dded86cebf1f87042a8e448c6faa63cf38b9c0af"
+            ],
+            "index": "pypi",
+            "version": "==0.2.1"
         },
         "uplink": {
             "hashes": [
