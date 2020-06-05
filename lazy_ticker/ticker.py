@@ -30,6 +30,7 @@ def authenticate_client():
 
 @validate_arguments
 def get_instruments(symbols: List[str]) -> List[Instrument]:
+    # MAX TICKERS 500 add max len validation
     api = authenticate_client()
 
     response = api.search_instruments(
@@ -41,7 +42,7 @@ def get_instruments(symbols: List[str]) -> List[Instrument]:
     try:
         return [Instrument(**value) for value in json.values()]
     except ValidationError as e:
-        print(json)
+        print(json.values())
         raise e
 
 
