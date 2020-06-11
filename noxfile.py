@@ -3,5 +3,5 @@ import nox
 
 @nox.session(python=False)
 def testserver(session):
-    session.run("pipenv", "run", "uvicorn", "main:app", "--reload")
+    session.run("pipenv", "run", "uvicorn", "main:app", "--reload", "--port", "5000")
 

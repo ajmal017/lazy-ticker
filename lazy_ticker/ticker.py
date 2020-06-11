@@ -1,8 +1,8 @@
 from tda import auth
 from tda.client import Client
-from paths import PROJECT_ROOT, LOCAL_CHROMEDRIVER_LOCATION
+from .paths import PROJECT_ROOT, LOCAL_CHROMEDRIVER_LOCATION
 from decouple import config
-from schema import Instrument
+from .schema import Instrument
 from typing import List
 from pydantic import validate_arguments
 from pydantic.error_wrappers import ValidationError
@@ -42,7 +42,9 @@ def get_instruments(symbols: List[str]) -> List[Instrument]:
     try:
         return [Instrument(**value) for value in json.values()]
     except ValidationError as e:
-        print(json.values())
+        for v in json.values():
+            print()
+            print(v)
         raise e
 
 
