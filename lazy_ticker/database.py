@@ -22,7 +22,7 @@ class LazyDB:
     @staticmethod
     @contextmanager
     @validate_arguments
-    def connect(postgres_uri: PostgresDsn):
+    def connect(postgres_uri: PostgresDsn):  # take base as arg
         engine = create_engine(postgres_uri)
         Base.metadata.create_all(engine)
         Session = sessionmaker(bind=engine)

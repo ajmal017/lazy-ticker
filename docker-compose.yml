@@ -2,11 +2,12 @@
 version: '3.1'
 
 services:
-
-  db:
-    image: postgres
-    restart: always
-    environment:
-      POSTGRES_DB: lazydb
-    ports:
-      - 5432:5432
+    db:
+        image: postgres
+        restart: always
+        environment:
+            POSTGRES_DB: lazydb
+            POSTGRES_USERNAME: lazyuser
+            POSTGRES_PASSWORD: lazysecret
+        ports:
+            - 5432:5432

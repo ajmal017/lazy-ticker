@@ -5,7 +5,7 @@ from lazy_ticker.ticker import get_instruments
 from typing import List
 from lazy_ticker.schema import Hours
 from lazy_ticker.paths import WATCHLIST_PATH
-from lazy_ticker.pipeline import WATCHLIST_PIPELINE
+from lazy_ticker.pipelines import WATCHLIST_PIPELINE
 import luigi
 
 app = FastAPI()
