@@ -5,17 +5,17 @@ from datetime import datetime
 InstrumentBase = declarative_base()
 
 
-class InstrumentTable(InstrumentBase):
+class InstrumentsTable(InstrumentBase):
     """
     Stores basic information about the instrument.
     """
 
-    __tablename__ = "instrument"
+    __tablename__ = "instruments"
 
     id = Column(Integer, index=True, primary_key=True, autoincrement=True)
     cusip = Column(String, unique=True)
     symbol = Column(String, unique=True)
-    description = Column(String, unique=True)
-    exchange = Column(String)
-    asset_type = Column(String)
+    description = Column(String)
+    exchange = Column(String, index=True)
+    asset_type = Column(String, index=True)
     date = Column(DateTime, default=datetime.utcnow)

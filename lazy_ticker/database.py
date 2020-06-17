@@ -1,6 +1,7 @@
 from contextlib import contextmanager
 
-from lazy_ticker.models import InstrumentBase, InstrumentTable
+from lazy_ticker.models import InstrumentBase, InstrumentsTable
+from lazy_ticker.models import TwitterBase, TwitterUsersTable, TweetsTable
 
 from datetime import datetime, timedelta
 
@@ -20,6 +21,7 @@ class LazyDB:
     def connect(cls):
         engine = create_engine(cls.DATABASE_URI)
         InstrumentBase.metadata.create_all(engine)
+        TwitterBase.metadata.create_all(engine)
 
         Session = sessionmaker(bind=engine)
         yield Session
