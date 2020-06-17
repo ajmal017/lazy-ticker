@@ -1,75 +1,30 @@
 import re
 
-from twitter_scraper import get_tweets
-import pydantic
-from pydantic import Field
-from typing import List
+from twitter_scraper import get_tweets, Profile
+from pydantic import validate_arguments
+from typing import Optional
 from datetime import datetime
 
-
-class Entries(pydantic.BaseModel):
-    hashtags: List[str]
-    photos: List[str]
-    urls: List[str]  # URL?
-    videos: List[str]
+from lazy_ticker.schemas import RawTweetSchema, ProcessedTweetSchema
 
 
-class TweetSchema(pydantic.BaseModel):
-    entries: Entries
-    is_pinned: bool = Field(alias="isPinned")
-    is_retweet: bool = Field(alias="isRetweet")
-    likes: int
-    replies: int
-    retweets: int
-    text: str
-    published_time: datetime = Field(alias="time")
-    tweet_id: int = Field(alias="tweetId")
-    tweet_url: str = Field(alias="tweetUrl")
-    user_id: int = Field(alias="userId")
-    username: str
-
-    @staticmethod
-    def clean_symbol(ticker):
-        return ticker.replace("$", "")
-
-    @classmethod
-    def parse_symbols_from_text(cls, text):
-        symbol_regex = re.compile(r"\$[^\d\s]\w*")
-        matched_symbols = symbol_regex.findall(text)
-
-        if len(matched_symbols) > 0:
-            return [cls.clean_symbol(symbol) for symbol in matched_symbols]
-
-        else:
-            return None
-
-    def process_tweet(self):
-        symbols = self.parse_symbols_from_text(self.text)
-        return ProcessedTweetSchema(**self.dict(), symbols=symbols)
-
-
-class ProcessedTweetSchema(pydantic.BaseModel):
-    user_id: int
-    tweet_id: int
-    published_time: datetime
-    symbols: List[str] = None  # start none
-
-
-def get_stocks_from_twitter(
-    twitter_name: int, max_tickers: int, max_pages: int, break_on_tweet_id=None
-):
+@validate_arguments
+def get_symbols_from_tweets(
+    twitter_name: str, max_tickers: int, max_pages: int, break_on_tweet_id=Optional[int]
+) -> ProcessedTweetSchema:
     tickers_found = 0
 
     for tweet in get_tweets(twitter_name, pages=max_pages):
         if tweet["isRetweet"] == True:
             continue
 
-        tweet = TweetSchema(**tweet).process_tweet()
+        tweet = RawTweetSchema(**tweet).process_raw_tweet()
 
         if tweet.tweet_id == break_on_tweet_id:
             break
 
         if tweet.symbols:
+
             tickers_found += len(tweet.symbols)
             if tickers_found >= max_tickers:
                 break
@@ -77,8 +32,17 @@ def get_stocks_from_twitter(
                 yield tweet
 
 
-id = 1273041703193112579
+def get_twitter_user_id(username: str) -> int:
+    return int(Profile(username).user_id)
 
-for idx, x in enumerate(get_stocks_from_twitter("seekingalpha", max_tickers=50, max_pages=5)):
-    print(idx)
-    print(x)
+
+#
+# tweet_id = 1273041703193112579
+# tweet_id = None
+# from pprint import pprint as print
+#
+# for tweet in get_symbols_from_tweets(
+#     "seekingalpha", max_tickers=200, max_pages=10, break_on_tweet_id=tweet_id
+# ):
+#     for s in tweet.process_symbols():
+#         print(s.json())
