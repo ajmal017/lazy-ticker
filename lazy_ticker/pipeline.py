@@ -2,6 +2,7 @@ import luigi
 from luigi import LocalTarget
 import pydantic
 from lazy_ticker.paths import PROJECT_ROOT
+from lazy_ticker.database import LazyDB
 from pathlib import Path
 from time import sleep
 
@@ -26,8 +27,12 @@ class CreateTextFile(luigi.Task):
         output_path = create_path(self.output())
         from time import sleep
 
-        sleep(15)
-        output_path.touch()
+        users = LazyDB.get_all_users()
+
+        sleep(5)
+        with open(output_path, mode="a") as write_file:
+            for user in users:
+                write_file.write(str(user.name))
 
 
 class DeleteTextFile(luigi.Task):
@@ -43,17 +48,19 @@ class DeleteTextFile(luigi.Task):
         output_path = create_path(self.output())
         from time import sleep
 
-        sleep(15)
+        sleep(5)
+        with open(output_path, mode="r") as read_file:
+            print(read_file.read())
         output_path.unlink()
 
 
 while True:
-    for wait_time in range(15):
+    for wait_time in range(5):
         sleep(1)
         print(".", end="", flush=True)
     luigi.build([CreateTextFile()], workers=1, local_scheduler=False)
 
-    for wait_time in range(15):
+    for wait_time in range(5):
         sleep(1)
         print(".", end="", flush=True)
     luigi.build([DeleteTextFile()], workers=1, local_scheduler=False)

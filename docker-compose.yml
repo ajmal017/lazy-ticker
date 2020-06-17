@@ -41,6 +41,11 @@ services:
             - 8082:8082
         networks:
             - lazy_network
+        environment:
+            DATABASE_IP: lazydb
+            DATABASE_PORT: 5432
+            DATABASE_USER: lazyuser
+            DATABASE_PASSWORD: lazysecret
         depends_on:
             - web
 
