@@ -9,10 +9,10 @@ class TwitterUsersTable(TwitterBase):
     __tablename__ = "twitter_users"
 
     id = Column(Integer, index=True, primary_key=True, autoincrement=True)
-    name = Column(String)
-    user_id = Column(BigInteger, index=True)
+    name = Column(String, unique=True)
+    user_id = Column(BigInteger, index=True, unique=True)
     date = Column(DateTime, default=datetime.utcnow)
-    last_tweet_id = Column(BigInteger, nullable=True)
+    last_tweet_id = Column(BigInteger, nullable=True, unique=True)
 
 
 class TweetsTable(TwitterBase):

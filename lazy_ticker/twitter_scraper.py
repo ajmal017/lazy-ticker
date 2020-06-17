@@ -33,9 +33,16 @@ def get_symbols_from_tweets(
 
 
 def get_twitter_user_id(username: str) -> int:
-    return int(Profile(username).user_id)
+    try:
+        return int(Profile(username).user_id)
+    except IndexError as e:  # TODO rewrite Profile for better error handling.
+        return None
 
 
+#
+# x = get_twitter_user_id("dgnsrek")
+# print(x)
+#
 #
 # tweet_id = 1273041703193112579
 # tweet_id = None

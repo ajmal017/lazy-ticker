@@ -32,6 +32,42 @@ class LazyDB:
             session = Session()
             print(session)
 
+    @classmethod
+    def add_user(cls, name: str, user_id: int):
+        with cls.connect() as Session:
+            session = Session()
+            try:
+                twitter_user = TwitterUsersTable(name=name, user_id=user_id)
+                session.add(twitter_user)
+                session.commit()
+                return twitter_user
+
+            except IntegrityError:
+                session.rollback()
+                return twitter_user
+
+    @classmethod
+    def remove_user(cls, name: str):
+        with cls.connect() as Session:
+            session = Session()
+            query = session.query(TwitterUsersTable).filter(TwitterUsersTable.name == name).first()
+            if query:
+                session.delete(query)
+                session.commit()
+            return query
+
+    @classmethod
+    def get_user(cls, name: str):
+        with cls.connect() as Session:
+            session = Session()
+            return session.query(TwitterUsersTable).filter(TwitterUsersTable.name == name).first()
+
+    @classmethod
+    def get_all_users(cls):
+        with cls.connect() as Session:
+            session = Session()
+            return session.query(TwitterUsersTable).order_by("date").all()
+
     # @classmethod
     # def add_symbols(cls, symbols: List[Instrument]) -> None:
     #     with cls.connect(cls.DATABASE_URI) as Session:
