@@ -31,6 +31,8 @@ hypothesis = "^5.16.1"
 pytest-regressions = "^2.0.1"
 pytest-rerunfailures = "^9.0"
 mimesis = "^4.0.0"
+tomlkit = "^0.6.0"
+pytest-sugar = "^0.9.3"
 
 [build-system]
 requires = ["poetry>=0.12"]
