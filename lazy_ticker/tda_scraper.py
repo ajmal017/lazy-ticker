@@ -7,6 +7,7 @@ from lazy_ticker.schemas import InstrumentSchema
 
 from typing import List
 
+import pydantic
 from pydantic import validate_arguments
 from pydantic.error_wrappers import ValidationError
 
@@ -46,6 +47,6 @@ def get_instruments(symbols: List[str]) -> List[InstrumentSchema]:
 
     assert response.ok, response.raise_for_status()
 
-    json = response.json()
+    data = list(response.json().values())
 
-    return [InstrumentSchema(**value) for value in json.values()]
+    return pydantic.parse_obj_as(List[InstrumentSchema], data)

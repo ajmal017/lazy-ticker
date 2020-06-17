@@ -1,59 +1,84 @@
-from twitter_scraper import get_tweets
 import re
-from pprint import pprint as print
+
+from twitter_scraper import get_tweets
+import pydantic
+from pydantic import Field
+from typing import List
+from datetime import datetime
 
 
-def clean_ticker(ticker):
-    return ticker.replace("$", "")
+class Entries(pydantic.BaseModel):
+    hashtags: List[str]
+    photos: List[str]
+    urls: List[str]  # URL?
+    videos: List[str]
 
 
-def parse_tickers_from_text(text):
-    tickerTweetRegex = re.compile(r"\$[^\d\s]\w*")
-    tweets = tickerTweetRegex.findall(text)
-    if len(tweets) > 0:
-        return tweets
-    else:
-        return None
+class TweetSchema(pydantic.BaseModel):
+    entries: Entries
+    is_pinned: bool = Field(alias="isPinned")
+    is_retweet: bool = Field(alias="isRetweet")
+    likes: int
+    replies: int
+    retweets: int
+    text: str
+    published_time: datetime = Field(alias="time")
+    tweet_id: int = Field(alias="tweetId")
+    tweet_url: str = Field(alias="tweetUrl")
+    user_id: int = Field(alias="userId")
+    username: str
+
+    @staticmethod
+    def clean_symbol(ticker):
+        return ticker.replace("$", "")
+
+    @classmethod
+    def parse_symbols_from_text(cls, text):
+        symbol_regex = re.compile(r"\$[^\d\s]\w*")
+        matched_symbols = symbol_regex.findall(text)
+
+        if len(matched_symbols) > 0:
+            return [cls.clean_symbol(symbol) for symbol in matched_symbols]
+
+        else:
+            return None
+
+    def process_tweet(self):
+        symbols = self.parse_symbols_from_text(self.text)
+        return ProcessedTweetSchema(**self.dict(), symbols=symbols)
 
 
-def clean_tweet(tweet):
-    tweet.pop("entries")
-    tweet.pop("isPinned")
-    tweet.pop("likes")
-    tweet.pop("replies")
-    tweet.pop("retweets")
-    tweet.pop("isRetweet")
-    tweet.pop("tweetUrl")
-    tweet.pop("text")
-    return tweet
+class ProcessedTweetSchema(pydantic.BaseModel):
+    user_id: int
+    tweet_id: int
+    published_time: datetime
+    symbols: List[str] = None  # start none
 
 
-def get_stocks_from_twitter(twitter_name, max_tickers=9, max_pages=10):
+def get_stocks_from_twitter(
+    twitter_name: int, max_tickers: int, max_pages: int, break_on_tweet_id=None
+):
+    tickers_found = 0
 
-    ticker_count = 0
-    group = []
-
-    for tweet in get_tweets(twitter_name, pages=max_pages):  # should be a generator somewhere.
-
-        if tweet["isRetweet"]:
+    for tweet in get_tweets(twitter_name, pages=max_pages):
+        if tweet["isRetweet"] == True:
             continue
 
-        symbols = parse_tickers_from_text(tweet["text"])
+        tweet = TweetSchema(**tweet).process_tweet()
 
-        if symbols:
-            cleaned_tweet = clean_tweet(tweet)
-            symbols = list(set([clean_ticker(symbol) for symbol in symbols]))
-            ticker_count += len(symbols)
+        if tweet.tweet_id == break_on_tweet_id:
+            break
 
-            for symbol in symbols:
-                cleaned_tweet["symbol"] = symbol
-                group.append(cleaned_tweet.copy())
-
-        if ticker_count >= max_tickers:
-            return group
-
-    return group
+        if tweet.symbols:
+            tickers_found += len(tweet.symbols)
+            if tickers_found >= max_tickers:
+                break
+            else:
+                yield tweet
 
 
-x = get_stocks_from_twitter("seekingalpha", max_tickers=100)
-print(x)
+id = 1273041703193112579
+
+for idx, x in enumerate(get_stocks_from_twitter("seekingalpha", max_tickers=50, max_pages=5)):
+    print(idx)
+    print(x)
