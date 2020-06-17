@@ -34,7 +34,7 @@ services:
         networks:
             - lazy_network
 
-    luigi_demon:
+    luigi_daemon:
         image: axiom/docker-luigi:2.8.13
         restart: always
         ports:
@@ -63,7 +63,7 @@ services:
             DATABASE_USER: lazyuser
             DATABASE_PASSWORD: lazysecret
         depends_on:
-            - luigi_demon
+            - luigi_daemon
 
 
 networks:
