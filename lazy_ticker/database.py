@@ -30,7 +30,7 @@ class LazyDB:
     def test_database_connection(cls):
         with cls.connect() as Session:
             session = Session()
-            print(session)
+            session.close()
 
     @classmethod
     def add_user(cls, name: str, user_id: int):
@@ -40,10 +40,12 @@ class LazyDB:
                 twitter_user = TwitterUsersTable(name=name, user_id=user_id)
                 session.add(twitter_user)
                 session.commit()
+                session.close()
                 return twitter_user
 
             except IntegrityError:
                 session.rollback()
+                session.close()
                 return twitter_user
 
     @classmethod
@@ -54,6 +56,7 @@ class LazyDB:
             if query:
                 session.delete(query)
                 session.commit()
+            session.close()
             return query
 
     @classmethod
@@ -67,6 +70,35 @@ class LazyDB:
         with cls.connect() as Session:
             session = Session()
             return session.query(TwitterUsersTable).order_by("date").all()
+
+    @classmethod
+    def add_tweet(cls, tweet: dict):  # should take a list of tweets to keep the same port open
+        with cls.connect() as Session:
+            session = Session()
+            try:
+                tweet = TweetsTable(**tweet)
+                session.add(tweet)
+                session.commit()
+                session.close()
+                return tweet
+
+            except IntegrityError:
+                session.rollback()
+                session.close()
+                return tweet
+
+    @classmethod
+    def tweet_id_exists(cls, tweet_id: int):  # should pass list of all ids
+        with cls.connect() as Session:
+            session = Session()
+            return session.query(TweetsTable).filter(TweetsTable.tweet_id == tweet_id).scalar()
+
+    # @classmethod
+    # def query_tweets_by_date_added(cls, date_added: datetime):
+    #     with cls.connect() as Session:
+    #         session = Session()
+    #         return session.query(TwitterUsersTable).filter(TwitterUsersTable.name == name).first()
+    #
 
     # @classmethod
     # def add_symbols(cls, symbols: List[Instrument]) -> None:

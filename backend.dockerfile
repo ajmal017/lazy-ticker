@@ -6,7 +6,7 @@ COPY pyproject.toml /tmp/install/pyproject.toml
 COPY poetry.lock /tmp/install/poetry.lock
 
 RUN poetry config virtualenvs.create false
-RUN cd /tmp/install/ && poetry install
+RUN cd /tmp/install/ && poetry install --no-root
 
 COPY lazy_ticker /app/lazy_ticker
 COPY main.py /app/main.py

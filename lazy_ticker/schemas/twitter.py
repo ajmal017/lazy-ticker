@@ -1,6 +1,6 @@
 import re
 
-from typing import List
+from typing import List, Optional
 from datetime import datetime
 
 import pydantic
@@ -10,8 +10,28 @@ from pydantic import Field
 class Entries(pydantic.BaseModel):
     hashtags: List[str]
     photos: List[str]
-    urls: List[str]  # URL?
+    urls: List[str]  # NOTE: URL schema?
     videos: List[str]
+
+
+class TwitterUserSchema(pydantic.BaseModel):
+    id: int
+    name: str
+    user_id: int
+    date: datetime
+    last_tweet_id: Optional[int]
+
+    class Config:
+        orm_mode = True
+        allow_population_by_field_name = True  # NOTE: IS THIS NEEDED?
+
+
+class TwitterUserSchemaList(pydantic.BaseModel):
+    __root__: List[TwitterUserSchema]
+
+    class Config:
+        orm_mode = True
+        allow_population_by_field_name = True  # NOTE: IS THIS NEEDED?
 
 
 class TweetSchema(pydantic.BaseModel):
@@ -22,7 +42,15 @@ class TweetSchema(pydantic.BaseModel):
 
     class Config:
         orm_mode = True
-        allow_population_by_field_name = True
+        allow_population_by_field_name = True  # NOTE: IS THIS NEEDED?
+
+
+class TweetSchemaContainer(pydantic.BaseModel):  # NOTE: Maybe TweetContainerSchema?
+    __root__: List[TweetSchema]
+
+    class Config:
+        orm_mode = True
+        allow_population_by_field_name = True  # NOTE: IS THIS NEEDED?
 
 
 class ProcessedTweetSchema(pydantic.BaseModel):
@@ -37,7 +65,7 @@ class ProcessedTweetSchema(pydantic.BaseModel):
 
 
 class RawTweetSchema(pydantic.BaseModel):
-    entries: Entries
+    #    entries: Entries
     is_pinned: bool = Field(alias="isPinned")
     is_retweet: bool = Field(alias="isRetweet")
     likes: int

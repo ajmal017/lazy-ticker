@@ -19,3 +19,6 @@ class InstrumentsTable(InstrumentBase):
     exchange = Column(String, index=True)
     asset_type = Column(String, index=True)
     date = Column(DateTime, default=datetime.utcnow)
+
+    def __repr__(self):
+        return f"<{self.symbol}>"

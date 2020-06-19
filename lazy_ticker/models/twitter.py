@@ -8,18 +8,24 @@ TwitterBase = declarative_base()
 class TwitterUsersTable(TwitterBase):
     __tablename__ = "twitter_users"
 
-    id = Column(Integer, index=True, primary_key=True, autoincrement=True)
+    id = Column(Integer, index=True, primary_key=True)
     name = Column(String, unique=True)
     user_id = Column(BigInteger, index=True, unique=True)
     date = Column(DateTime, default=datetime.utcnow)
     last_tweet_id = Column(BigInteger, nullable=True, unique=True)
 
+    def __repr__(self):
+        return f"<{self.name}>"
+
 
 class TweetsTable(TwitterBase):
     __tablename__ = "tweets"
 
-    id = Column(Integer, index=True, primary_key=True, autoincrement=True)
+    id = Column(Integer, index=True, primary_key=True)
     user_id = Column(BigInteger)
     tweet_id = Column(BigInteger, unique=True)
     published_time = Column(DateTime)  # Index ?
     symbol = Column(String)
+
+    def __repr__(self):
+        return f"<{self.user_id}:{self.tweet_id}>"

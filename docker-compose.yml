@@ -2,7 +2,7 @@
 version: '3.1'
 
 services:
-    web:
+    backend:
         build:
             context: .
             dockerfile: backend.dockerfile
@@ -31,6 +31,7 @@ services:
             POSTGRES_PASSWORD: lazysecret
         ports:
             - 5432:5432
+        command: ["postgres", "-c", "log_error_verbosity=terse"]
         networks:
             - lazy_network
 
@@ -47,7 +48,7 @@ services:
             DATABASE_USER: lazyuser
             DATABASE_PASSWORD: lazysecret
         depends_on:
-            - web
+            - backend
 
     luigi_pipeline:
         build:
