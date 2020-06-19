@@ -1,7 +1,7 @@
 # from lazy_ticker import core  # used for testing paths
 from fastapi import FastAPI, Response, status
 from lazy_ticker.database import LazyDB
-from lazy_ticker.twitter_scraper import get_twitter_user_id
+from lazy_ticker.twitter_scraper import get_user_id
 
 app = FastAPI()
 
@@ -18,7 +18,7 @@ async def get_all_users():
 # TODO added cache for same request
 @app.post("/user/{username}", status_code=201)
 async def add_user(username: str, response: Response):
-    user_id = get_twitter_user_id(username)
+    user_id = get_user_id(username)
     if user_id:
         LazyDB.add_user(name=username, user_id=user_id)
         return {"message": f"{username} added"}
