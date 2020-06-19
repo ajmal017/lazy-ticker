@@ -19,7 +19,7 @@ class Configuration:
 
     CHROMEDRIVER_LOCATION = config("CHROMEDRIVER_LOCATION", LOCAL_CHROMEDRIVER_LOCATION)
 
-    TWITTER_MAX_PAGE_SEARCH = config("TWITTER_MAX_PAGE_SEARCH", default=1)
+    TWITTER_MAX_PAGE_SEARCH = config("TWITTER_MAX_PAGE_SEARCH", cast=int, default=1)
 
     @classmethod
     def get_database_uri(cls):

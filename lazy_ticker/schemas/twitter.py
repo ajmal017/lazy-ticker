@@ -4,7 +4,6 @@ from typing import List, Optional
 from datetime import datetime
 
 import pydantic
-from pydantic import Field
 
 
 class TwitterUserSchema(pydantic.BaseModel):
@@ -16,7 +15,6 @@ class TwitterUserSchema(pydantic.BaseModel):
 
     class Config:
         orm_mode = True
-        allow_population_by_field_name = True  # NOTE: IS THIS NEEDED?
 
 
 class TwitterSymbolSchema(pydantic.BaseModel):
@@ -27,23 +25,22 @@ class TwitterSymbolSchema(pydantic.BaseModel):
 
     class Config:
         orm_mode = True
-        allow_population_by_field_name = True  # NOTE: IS THIS NEEDED?
 
 
 class TweetSchema(pydantic.BaseModel):
     text: str
-    published_time: datetime = Field(alias="time")
-    tweet_id: int = Field(alias="tweetId")
-    user_id: int = Field(alias="userId")
+    published_time: datetime = pydantic.Field(alias="time")
+    tweet_id: int = pydantic.Field(alias="tweetId")
+    user_id: int = pydantic.Field(alias="userId")
     username: str
     symbols: List[str] = []
 
     @staticmethod
-    def clean_symbol(ticker):
+    def clean_symbol(ticker: str) -> str:
         return ticker.replace("$", "")
 
     @classmethod
-    def parse_symbols_from_text(cls, text) -> List[str]:
+    def parse_symbols_from_text(cls, text) -> List[str]:  # NOTE: Optional?
         regex_symbol = re.compile(r"\$[^\d\s]\w*")
         matched_symbols = regex_symbol.findall(text)
 
@@ -52,9 +49,9 @@ class TweetSchema(pydantic.BaseModel):
         else:
             return []
 
-    def populate_symbols(self):
+    def populate_symbols(self) -> None:
         self.symbols = self.parse_symbols_from_text(self.text)
 
-    def get_tweet_symbols(self):
+    def get_tweet_symbols(self) -> TwitterSymbolSchema:
         for symbol in self.symbols:
             yield TwitterSymbolSchema(**self.dict(), symbol=symbol)
