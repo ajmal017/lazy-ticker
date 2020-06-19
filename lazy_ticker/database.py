@@ -1,7 +1,7 @@
 from contextlib import contextmanager
 
 from lazy_ticker.models import InstrumentBase, InstrumentsTable
-from lazy_ticker.models import TwitterBase, TwitterUsersTable, TweetsTable
+from lazy_ticker.models import TwitterModelBase, TwitterUsersTable, TwitterSymbolsTable
 
 from datetime import datetime, timedelta
 
@@ -21,7 +21,7 @@ class LazyDB:
     def connect(cls):
         engine = create_engine(cls.DATABASE_URI)
         InstrumentBase.metadata.create_all(engine)
-        TwitterBase.metadata.create_all(engine)
+        TwitterModelBase.metadata.create_all(engine)
 
         Session = sessionmaker(bind=engine)
         yield Session
@@ -76,7 +76,7 @@ class LazyDB:
         with cls.connect() as Session:
             session = Session()
             try:
-                tweet = TweetsTable(**tweet)
+                tweet = TwitterSymbolsTable(**tweet)
                 session.add(tweet)
                 session.commit()
                 session.close()
@@ -91,7 +91,7 @@ class LazyDB:
     def tweet_id_exists(cls, tweet_id: int):  # should pass list of all ids
         with cls.connect() as Session:
             session = Session()
-            return session.query(TweetsTable).filter(TweetsTable.tweet_id == tweet_id).scalar()
+            return session.query(TwitterSymbolsTable).filter(TwitterSymbolsTable.tweet_id == tweet_id).scalar()
 
     # @classmethod
     # def query_tweets_by_date_added(cls, date_added: datetime):

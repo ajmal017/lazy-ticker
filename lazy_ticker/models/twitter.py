@@ -2,10 +2,10 @@ from sqlalchemy import Column, Integer, String, DateTime, BigInteger
 from sqlalchemy.ext.declarative import declarative_base
 from datetime import datetime
 
-TwitterBase = declarative_base()
+TwitterModelBase = declarative_base()
 
 
-class TwitterUsersTable(TwitterBase):
+class TwitterUsersTable(TwitterModelBase):
     __tablename__ = "twitter_users"
 
     id = Column(Integer, index=True, primary_key=True)
@@ -18,8 +18,8 @@ class TwitterUsersTable(TwitterBase):
         return f"<{self.name}>"
 
 
-class TweetsTable(TwitterBase):
-    __tablename__ = "tweets"
+class TwitterSymbolsTable(TwitterModelBase):
+    __tablename__ = "twitter_symbols"
 
     id = Column(Integer, index=True, primary_key=True)
     user_id = Column(BigInteger)
