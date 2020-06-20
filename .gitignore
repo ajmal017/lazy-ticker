@@ -100,3 +100,6 @@ secrets.ini
 chromedriver_linux64.zip
 chromedriver
 watchlists/
+old/
+testfile
+data/

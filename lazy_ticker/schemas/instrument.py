@@ -1,8 +1,6 @@
 import pydantic
-from pydantic import validate_arguments, Field
 from typing import List
-
-from enum import Enum, IntEnum
+from enum import Enum
 
 
 class AssetType(str, Enum):
@@ -27,8 +25,7 @@ class Exchange(str, Enum):
     PINK = "Pink Sheet"
     UNKOWN = "Unknown"
 
-    @property
-    def tradingview_conversion(self) -> str:
+    def convert_to_tradingview_exchange(self) -> str:
         if self is self.PACIFIC:
             return self.AMEX.value
         elif self is self.PINK:
@@ -39,33 +36,40 @@ class Exchange(str, Enum):
             return self.value
 
 
-class Instrument(pydantic.BaseModel):
+class InstrumentSchema(pydantic.BaseModel):
     cusip: str
     symbol: str
     description: str
     exchange: Exchange
-    asset_type: AssetType = Field(alias="assetType")
+    asset_type: AssetType = pydantic.Field(alias="assetType")
 
     class Config:
         orm_mode = True
         allow_population_by_field_name = True
 
-    def get_trading_view_string(self, include_inverted: bool = False) -> List[str]:
-        if self.exchange.tradingview_conversion:
-            tv_string = [f"{self.exchange.tradingview_conversion}:{self.symbol}"]
+    def get_tradingview_ticker(self, include_inverted: bool = True) -> List[str]:
+        exchange = self.exchange.convert_to_tradingview_exchange()
+        if exchange:
+            tickers = [f"{exchange}:{self.symbol}"]
             if include_inverted:
-                tv_string += [f"0-{self.exchange.tradingview_conversion}:{self.symbol}"]
+                tickers += [f"0-{exchange}:{self.symbol}"]
         else:
-            tv_string = [f"{self.symbol}"]
+            tickers = [f"{self.symbol}"]
             if include_inverted:
-                tv_string += [f"0-{self.symbol}"]
+                tickers += [f"0-{self.symbol}"]
 
-        return tv_string
+        return tickers
 
 
-class Hours(IntEnum):
-    one = 1
-    two = 2
-    six = 6
-    twelve = 12
-    twenty_four = 24
+if __name__ == "__main__":  # TODO Dump for tests.
+
+    apple = InstrumentSchema(
+        cusip=1,
+        symbol="appl",
+        description="apple desc",
+        exchange=Exchange.PINK,
+        asset_type=AssetType.EQUITY,
+    )
+    print(apple)
+    print(apple.exchange)
+    print(apple.get_tradingview_ticker())

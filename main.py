@@ -1,48 +1,45 @@
-from fastapi import FastAPI, BackgroundTasks
-from fastapi.responses import FileResponse
+# from lazy_ticker import core  # used for testing paths
+from fastapi import FastAPI, Response, status
 from lazy_ticker.database import LazyDB
-from lazy_ticker.ticker import get_instruments
-from typing import List
-from lazy_ticker.schema import Hours
-from lazy_ticker.paths import WATCHLIST_PATH
-from lazy_ticker.pipeline import WATCHLIST_PIPELINE
-import luigi
+from lazy_ticker.twitter_scraper import get_user_id
 
 app = FastAPI()
 
 
-@app.get("/")
-async def root():
-    return {"message": "TESTING!!!"}
-
-
-@app.get("/symbols/")
-async def get_symbols(limit: int = 10):
-    return LazyDB.get_most_recent(limit)
-
-
-@app.get("/symbols/all")
-async def get_all_symbols():
-    return LazyDB.get_symbols()
-
-
-@app.post("/symbols/")
-async def add_symbols(symbols: List[str]):
-    valid_symbols = get_instruments(symbols)
-    LazyDB.add_symbols(valid_symbols)
-    return valid_symbols
-
-
-@app.post("/watchlist/download/{since}")
-async def download_all_symbols(since: Hours, filename: str, inverted: bool = True):
-
-    for task in WATCHLIST_PIPELINE:
-        luigi.build([task], workers=10, local_scheduler=False)
-
-    if inverted:
-        target = f"last_{since.name}_hour_watchlist_plus_inverted.txt"
+@app.get("/user/")
+async def get_all_users():
+    query = LazyDB.get_all_users()
+    if query:
+        return {"message": query}
     else:
-        target = f"last_{since.name}_hour_watchlist.txt"
+        return {"message": None}
 
-    path = WATCHLIST_PATH / target
-    return FileResponse(path, filename=filename)
+
+# TODO added cache for same request
+@app.post("/user/{username}", status_code=201)
+async def add_user(username: str, response: Response):
+    # TODO: parse @ symbols. Maybe use regex
+    user_id = get_user_id(username)
+    if user_id:
+        LazyDB.add_user(name=username, user_id=user_id)
+        return {"message": f"{username} added"}
+    else:
+        response.status_code = 400
+        return {"message": f"{username} is an invalid account name."}
+
+
+@app.delete("/user/{username}")
+async def remove_user(username: str):
+    if LazyDB.remove_user(name=username):
+        return {"message": f"{username} removed"}
+    else:
+        return {"message": f"{username} doesn't exist."}
+
+
+@app.get("/user/{username}")
+async def get_user(username: str):
+    query = LazyDB.get_user(name=username)
+    if query:
+        return {"message": query}
+    else:
+        return {"message": f"{username} doesn't exist."}

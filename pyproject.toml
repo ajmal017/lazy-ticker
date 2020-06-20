@@ -1,0 +1,39 @@
+[tool.poetry]
+name = "lazy-ticker"
+version = "0.1.0"
+description = ""
+authors = ["dgnsrekt <dgnsrekt@pm.me>"]
+license = "MIT"
+
+[tool.poetry.dependencies]
+python = "^3.8"
+python-decouple = "^3.3"
+fastapi = "^0.58.0"
+aiofiles = "^0.5.0"
+uvicorn = "^0.11.5"
+tda-api = "^0.3.2"
+SQLAlchemy = "^1.3.17"
+luigi = "^3.0.0"
+requests = "^2.23.0"
+uplink = "^0.9.1"
+psycopg2-binary = "^2.8.5"
+typer = "^0.2.1"
+twitter-scraper = {git = "https://github.com/bisguzar/twitter-scraper"}
+pendulum = "^2.1.0"
+loguru = "^0.5.1"
+notifiers = "^1.2.1"
+
+[tool.poetry.dev-dependencies]
+black = "^19.10b0"
+nox = "^2020.5.24"
+pytest-watch = "^4.2.0"
+hypothesis = "^5.16.1"
+pytest-regressions = "^2.0.1"
+pytest-rerunfailures = "^9.0"
+mimesis = "^4.0.0"
+tomlkit = "^0.6.0"
+pytest-sugar = "^0.9.3"
+
+[build-system]
+requires = ["poetry>=0.12"]
+build-backend = "poetry.masonry.api"

@@ -1,80 +1,182 @@
+import sys
 from contextlib import contextmanager
 
-from pydantic import validate_arguments, PostgresDsn
-from typing import List
-from .schema import Instrument, Hours
-from decouple import config
-from . import models
-from .models import Base
+from lazy_ticker.models import InstrumentBaseModel, InstrumentsTable
+from lazy_ticker.models import TwitterModelBase, TwitterUsersTable, TwitterSymbolsTable
 
 from datetime import datetime, timedelta
+
 from sqlalchemy import create_engine
+from sqlalchemy import desc
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.exc import IntegrityError
-from sqlalchemy import desc
 
-from enum import Enum
+from typing import List
+from pydantic import validate_arguments
+
+from lazy_ticker.configuration import Configuration
+
+from loguru import logger
+
+DATABASE_URI = Configuration.get_database_uri()
+logger.add(sys.stdout, colorize=True, format="<green>{time}</green> <level>{message}</level>")
 
 
 class LazyDB:
-    DATABASE_URI = config("DATABASE_URI")
-
     @staticmethod
+    def create_session():
+        engine = create_engine(DATABASE_URI)
+        InstrumentBaseModel.metadata.create_all(engine)
+        TwitterModelBase.metadata.create_all(engine)
+        return sessionmaker(bind=engine)
+
+    @classmethod
     @contextmanager
-    @validate_arguments
-    def connect(postgres_uri: PostgresDsn):
-        engine = create_engine(postgres_uri)
-        Base.metadata.create_all(engine)
-        Session = sessionmaker(bind=engine)
-        yield Session
+    def session_manager(cls):
+        Session = cls.create_session()
+
+        session = Session()
+        try:
+            yield session
+        except IntegrityError as e:
+            session.rollback()
+            logger.debug(e)
+        except:
+            session.rollback()
+            raise
+        finally:
+            session.close()
 
     @classmethod
-    def add_symbols(cls, symbols: List[Instrument]) -> None:
-        with cls.connect(cls.DATABASE_URI) as Session:
-            session = Session()
-
-            for symbol in symbols:
-                instrument = models.Instruments(**symbol.dict())
-                try:
-                    session.add(instrument)
-                    session.commit()
-                except IntegrityError:
-                    session.rollback()
-                    query = (
-                        session.query(models.Instruments)
-                        .filter(models.Instruments.symbol == instrument.symbol)
-                        .update({"date": datetime.utcnow()})
-                    )
-                    session.commit()
-                    session.flush()
+    def add_user(cls, name: str, user_id: int):
+        with cls.session_manager() as session:
+            user = TwitterUsersTable(name=name, user_id=user_id)
+            session.add(user)
+            session.commit()
+            return user
 
     @classmethod
-    def get_symbols(cls):
-        with cls.connect(cls.DATABASE_URI) as Session:
-            session = Session()
-            query = session.query(models.Instruments)
-            instruments = [Instrument.from_orm(q) for q in query]
-        return instruments
-
-    @classmethod
-    @validate_arguments
-    def get_symbols_since(cls, hours: Hours):
-        since = datetime.utcnow() - timedelta(hours=hours.value)
-        with cls.connect(cls.DATABASE_URI) as Session:
-            session = Session()
-            query = session.query(models.Instruments).filter(models.Instruments.date > since)
-            instruments = [Instrument.from_orm(q) for q in query]
-        return instruments
-
-    @classmethod
-    def get_most_recent(cls, amount: int):
-        with cls.connect(cls.DATABASE_URI) as Session:
-            session = Session()
+    def remove_user(cls, name: str):
+        with cls.session_manager() as session:
             query = (
-                session.query(models.Instruments)
-                .order_by(models.Instruments.date.desc())
-                .limit(amount)
-                .all()
+                session.query(TwitterUsersTable).filter(TwitterUsersTable.name == name).delete()
             )
-            instruments = [Instrument.from_orm(q) for q in query]
-        return instruments
+            session.commit()
+            return query
+
+    @classmethod
+    def get_user(cls, name: str):
+        with cls.session_manager() as session:
+            return (
+                session.query(TwitterUsersTable)
+                .filter(TwitterUsersTable.name == name)
+                .one_or_none()
+            )
+
+    @classmethod
+    def update_users_last_tweet(cls, name: str, last_tweet_id: int):
+        with cls.session_manager() as session:
+            query = (
+                session.query(TwitterUsersTable)
+                .filter(TwitterUsersTable.name == name)
+                .one_or_none()
+            )
+            query.last_tweet_id = last_tweet_id
+            session.commit()
+
+    @classmethod
+    def get_all_users(cls):
+        with cls.session_manager() as session:
+            return session.query(TwitterUsersTable).order_by("date").all()
+
+    @classmethod
+    def add_tweets(
+        cls, tweets: List[dict]
+    ):  # should take a list of tweets to keep the same port open
+        with cls.session_manager() as session:
+            for tweet in tweets:
+                tweet = TwitterSymbolsTable(**tweet)
+                session.add(tweet)
+                session.commit()
+
+    @classmethod
+    @validate_arguments
+    def check_all_tweets_exists(cls, tweets: List[dict]):  # should pass list of all ids
+        with cls.session_manager() as session:
+            for tweet in tweets:
+                query = session.query(TwitterSymbolsTable.tweet_id).filter(
+                    TwitterSymbolsTable.tweet_id == tweet["tweet_id"]
+                )
+                exists = session.query(query.exists()).scalar()
+                if not exists:
+                    logger.error(f"{tweet} does not exists in the database.")
+                    return False
+            else:
+                return True
+
+    # @classmethod
+    # def tweet_id_exists(cls, tweet_id: int):  # should pass list of all ids
+    #     with cls.session_manager() as session:
+    #         return (
+    #             session.query(TwitterSymbolsTable)
+    #             .filter(TwitterSymbolsTable.tweet_id == tweet_id)
+    #             .scalar()
+    #         )
+    #
+    # @classmethod
+    # def query_tweets_by_date_added(cls, date_added: datetime):
+    #     with cls.connect() as Session:
+    #         session = Session()
+    #         return session.query(TwitterUsersTable).filter(TwitterUsersTable.name == name).first()
+    #
+
+    # @classmethod
+    # def add_symbols(cls, symbols: List[Instrument]) -> None:
+    #     with cls.connect(cls.DATABASE_URI) as Session:
+    #         session = Session()
+    #
+    #         for symbol in symbols:
+    #             instrument = models.Instruments(**symbol.dict())
+    #             try:
+    #                 session.add(instrument)
+    #                 session.commit()
+    #             except IntegrityError:
+    #                 session.rollback()
+    #                 query = (
+    #                     session.query(models.Instruments)
+    #                     .filter(models.Instruments.symbol == instrument.symbol)
+    #                     .update({"date": datetime.utcnow()})
+    #                 )
+    #                 session.commit()
+    #                 session.flush()
+    #
+    # @classmethod
+    # def get_symbols(cls):
+    #     with cls.connect(cls.DATABASE_URI) as Session:
+    #         session = Session()
+    #         query = session.query(models.Instruments)
+    #         instruments = [Instrument.from_orm(q) for q in query]
+    #     return instruments
+    #
+    # @classmethod
+    # @validate_arguments
+    # def get_symbols_since(cls, hours: Hours):
+    #     since = datetime.utcnow() - timedelta(hours=hours.value)
+    #     with cls.connect(cls.DATABASE_URI) as Session:
+    #         session = Session()
+    #         query = session.query(models.Instruments).filter(models.Instruments.date > since)
+    #         instruments = [Instrument.from_orm(q) for q in query]
+    #     return instruments
+    #
+    # @classmethod
+    # def get_most_recent(cls, amount: int):
+    #     with cls.connect(cls.DATABASE_URI) as Session:
+    #         session = Session()
+    #         query = (
+    #             session.query(models.Instruments)
+    #             .order_by(models.Instruments.date.desc())
+    #             .limit(amount)
+    #             .all()
+    #         )
+    #         instruments = [Instrument.from_orm(q) for q in query]
+    #     return instruments
