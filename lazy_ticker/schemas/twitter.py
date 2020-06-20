@@ -57,7 +57,9 @@ class TweetSchema(pydantic.BaseModel):
         self.symbols = self.parse_symbols_from_text(self.text)
 
     def get_tweet_symbols(self) -> List[TwitterSymbolSchema]:
-        return [TwitterSymbolSchema(**self.dict(), symbol=symbol) for symbol in self.symbols]
+        return [
+            TwitterSymbolSchema(**self.dict(), symbol=symbol.upper()) for symbol in self.symbols
+        ]
 
     def __repr__(self):
         return f"<{self.__class__.__name__} id={self.tweet_id}>"

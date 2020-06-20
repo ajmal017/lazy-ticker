@@ -165,8 +165,25 @@ def process_job(timestamp):
     print("processing job", timestamp, dt, dt.timezone_name)
     print(f"data/{date}/users/{timestamp}.json")
 
-    luigi.build([PiplineWrapper(timestamp=timestamp)], workers=3, local_scheduler=False)
     # TODO: Add workers to config
+    luigi.build([PiplineWrapper(timestamp=timestamp)], workers=3, local_scheduler=False)
+    # validate symbols pipe
+    # get all distinct symbols / null valid
+    # get all instruments
+    # compare.
+    # any distinct symbols that are in instruments mark valid = True
+
+    # get all distinct symbols / null valid
+    # seach tda to look for valid symbols iter 500 at a time
+    # mark rows valid = True
+
+    # mark all other rows valid = False
+
+    # remove any invalid rows
+
+    # build watchlist one
+    # build watchlist two
+    # clean up data folder date > 24 hours
 
 
 def start_pipeline_loop(*, minute_interval: int, sleep_interval: int = 1):
