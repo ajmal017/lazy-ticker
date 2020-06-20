@@ -15,115 +15,116 @@ import json
 
 
 @pydantic.validate_arguments
-def convert_date_to_string(date: date):
-    underscore_string = str(date).replace("-", "_")
-    return underscore_string
+def convert_date_to_string(date: date) -> str:
+    underscored_string = str(date).replace("-", "_")
+    return underscored_string
 
 
 @pydantic.validate_arguments
-def convert_to_target(path: Path):
-    return luigi.LocalTarget(str(path))
+def convert_to_target(path: Path) -> LocalTarget:
+    return LocalTarget(str(path))
 
 
-def convert_to_path(target: LocalTarget):
+def convert_to_path(target: LocalTarget) -> Path:
     if not isinstance(target, LocalTarget):
-        raise TypeError(f"Must be type a LocalTarget not {type(target)}")
+        raise TypeError(f"Target arg must be type LocalTarget not {type(target)}")
     return Path(target.path)
 
 
-def make_check_directory(target: LocalTarget, parents: bool = False):
+def make_directory_check_exists(target: LocalTarget, parents: bool = False) -> None:
     output_path = convert_to_path(target)
     output_path.mkdir(parents=parents)
     assert output_path.exists()
+    return None
 
 
-def input_path_target_output(input_target: LocalTarget, path: str):  # TODO FIND BETTER NAME
+def concatenate_targetpath(input_target: LocalTarget, path: str) -> LocalTarget:
     input_path = convert_to_path(input_target)
     target_path = input_path / path
     return convert_to_target(target_path)
 
 
 class MakeDateDirectory(Task):
-    timestamp = luigi.IntParameter()  # add description
+    timestamp = luigi.IntParameter()
 
     def output(self):
-        processing_date = pendulum.from_timestamp(self.timestamp).date()
-        target_directory = DATA_DIRECTORY / convert_date_to_string(processing_date)
-        return convert_to_target(target_directory)
+        date_processed = pendulum.from_timestamp(self.timestamp, tz="UTC").date()
+        target_directory_path = DATA_DIRECTORY / convert_date_to_string(date_processed)
+        return convert_to_target(target_directory_path)
 
     def run(self):
-        make_check_directory(self.output(), parents=True)
+        make_directory_check_exists(self.output(), parents=True)
 
 
-class CreateTweetsDirectory(Task):
-    timestamp = luigi.IntParameter()  # add description
+class MakeTweetsDirectory(Task):
+    timestamp = luigi.IntParameter()
 
     def requires(self):
         return MakeDateDirectory(self.timestamp)
 
     def output(self):
-        return input_path_target_output(self.input(), "tweets")
+        return concatenate_targetpath(self.input(), "tweets")
 
     def run(self):
-        make_check_directory(self.output())
+        make_directory_check_exists(self.output())
 
 
-class CreateTimeStampTweetDirectory(Task):
-    timestamp = luigi.IntParameter()  # add description
+class MakeTimeStampDirectory(Task):
+    timestamp = luigi.IntParameter()
 
     def requires(self):
-        return CreateTweetsDirectory(self.timestamp)
+        return MakeTweetsDirectory(self.timestamp)
 
     def output(self):
-        target_path = str(self.timestamp)
-        return input_path_target_output(self.input(), target_path)
+        target_directory_path = str(self.timestamp)
+        return concatenate_targetpath(self.input(), target_directory_path)
 
     def run(self):
-        make_check_directory(self.output())
+        make_directory_check_exists(self.output())
 
 
-class GetSingleUserTweets(Task):
-    timestamp = luigi.IntParameter()  # add description
-    user = luigi.Parameter()  # should be user obj
+class ScrapeUsersTweets(Task):
+    timestamp = luigi.IntParameter()
+    user = luigi.Parameter()
 
     def requires(self):
-        return CreateTimeStampTweetDirectory(self.timestamp)
+        return MakeTimeStampDirectory(self.timestamp)
 
     def output(self):
-        target_file = self.user.name + ".json"
-        return input_path_target_output(self.input(), target_file)
+        target_filename = self.user.name + ".json"
+        return concatenate_targetpath(self.input(), target_filename)
 
     def run(self):
         output_path = convert_to_path(self.output())
-        break_id = self.user.last_tweet_id  # NOTE: Dont forget to insert last tweet in the end
+        break_on_id = self.user.last_tweet_id
 
         scraped_tweets = []
-        for tweet in scrape_users_tweets(self.user.name, break_on_id=break_id):
-            scraped_tweets += tweet.get_tweet_symbols()
+        for tweet in scrape_users_tweets(self.user.name, break_on_id=break_on_id):
+            scraped_tweets += tweet.get_twitter_symbols()
 
         symbols = TwitterSymbolList(tweets=scraped_tweets)
-        #
-        with open(output_path, mode="w") as tweet_write_file:
-            tweet_write_file.write(symbols.json())
+
+        with open(output_path, mode="w") as write_file:
+            write_file.write(symbols.json())
 
         assert output_path.exists()
 
 
-class AddTweetToDatabase(Task):
-    timestamp = luigi.IntParameter()  # add description
+class InsertTweetsInToDatabase(Task):
+    timestamp = luigi.IntParameter()
     user = luigi.Parameter()
 
     def requires(self):
-        return GetSingleUserTweets(timestamp=self.timestamp, user=self.user)
+        return ScrapeUsersTweets(timestamp=self.timestamp, user=self.user)
 
     def complete(self):
         input_path = convert_to_path(self.input())
-        logger.debug(f"{self.user} | checking complete.")
+        logger.debug(f"{self.user} | checking if complete.")
         if input_path.exists():
             with open(input_path, mode="r") as read_file:
                 tweets = json.load(read_file)["tweets"]
 
-            if len(tweets) < 1:  # NOTE Maybe and is empty method
+            if len(tweets) < 1:
                 return True
 
             if LazyDB.check_all_tweets_exists(tweets):
@@ -141,39 +142,49 @@ class AddTweetToDatabase(Task):
 
         LazyDB.add_tweets(tweets)
 
-        if len(tweets) > 0:  # NOTE: Maybe an is empty method
+        if len(tweets) > 0:
             tweet_id = tweets[0]["tweet_id"]
             LazyDB.update_users_last_tweet(name=self.user.name, last_tweet_id=tweet_id)
 
 
-class PiplineWrapper(WrapperTask):
-    timestamp = luigi.IntParameter()  # add description
+class TwitterScraperPipline(WrapperTask):
+    timestamp = luigi.IntParameter()
+    users = luigi.Parameter()
 
     def requires(self):
-        users = LazyDB.get_all_users()
         # move get_all_users out.
         # Allows to start from an old state
         # have config option which allow restart from previous state
-        return [AddTweetToDatabase(timestamp=self.timestamp, user=user) for user in users]
+        return [
+            InsertTweetsInToDatabase(timestamp=self.timestamp, user=user) for user in self.users
+        ]
 
 
 from time import sleep
 import pendulum
 
-# TODO: LOGGING! LOGURU
+
 def process_job(timestamp):
-    dt = pendulum.from_timestamp(timestamp)
+    dt = pendulum.from_timestamp(timestamp, tz="UTC")
     date = dt.date()
-    print()
-    print("processing job", timestamp, dt, dt.timezone_name)
-    print(f"data/{date}/users/{timestamp}.json")
+
+    logger.debug("processing job", timestamp, dt, dt.timezone_name)
+    logger.debug(f"data/{date}/users/{timestamp}.json")
 
     # if get_all_users is empty
     # if config says restart from old state
     # than add users from old state
 
     # TODO: Add workers to config | TODO: dive into luigi config
-    luigi.build([PiplineWrapper(timestamp=timestamp)], workers=3, local_scheduler=False)
+    users = LazyDB.get_all_users()
+
+    if not users:
+        # restore user table from last state
+        pass
+
+    luigi.build(
+        [TwitterScraperPipline(timestamp=timestamp, users=users)], workers=3, local_scheduler=False
+    )
     # TODO: pipeline_task_successful =
     # NOTE: look up external tasks
     # validate symbols pipe
@@ -209,10 +220,10 @@ def start_pipeline_loop(*, minute_interval: int, sleep_interval: int = 1):
         periods = list(pendulum.period(start, end).range("minutes", minute_interval))
 
         for period in periods:
-            if pendulum.now() > period:
+            if pendulum.now("UTC") > period:
                 continue
             else:
-                while pendulum.now() < period:
+                while pendulum.now("UTC") < period:
                     sleep(sleep_interval)
                 else:
                     process_job(period.int_timestamp)

@@ -19,7 +19,6 @@ from lazy_ticker.configuration import Configuration
 from loguru import logger
 
 DATABASE_URI = Configuration.get_database_uri()
-logger.add(sys.stdout, colorize=True, format="<green>{time}</green> <level>{message}</level>")
 
 
 class LazyDB:

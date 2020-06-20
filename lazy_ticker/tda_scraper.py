@@ -37,9 +37,7 @@ def authenticate_client():
 
 @validate_arguments
 def get_instruments(symbols: List[str]) -> List[InstrumentSchema]:
-    assert len(symbols) < 500
-    # MAX TICKERS 500 add max len validation #TODO should iter over 500 ticker chunks
-    # TODO validation error over 500 here than another funtion which yield chunks
+    assert len(symbols) <= 500
     api = authenticate_client()
 
     response = api.search_instruments(

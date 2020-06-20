@@ -27,11 +27,11 @@ def start_pipeline_loop(minute_interval, sleep_interval=1):
         periods = list(pendulum.period(start, end).range("minutes", minute_interval))
 
         for period in periods:
-            if pendulum.now() > period:
+            if pendulum.now("UTC") > period:
                 print(".", end="", flush=True)
                 continue
             else:
-                while pendulum.now() < period:
+                while pendulum.now("UTC") < period:
                     print(".", end="", flush=True)
                     sleep(sleep_interval)
                 else:

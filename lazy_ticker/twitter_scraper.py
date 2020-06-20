@@ -39,5 +39,5 @@ def scrape_users_tweets(user: str, break_on_id: Optional[int] = None) -> TweetSc
 def scrape_user_id(username: str) -> Optional[int]:
     try:
         return int(Profile(username).user_id)
-    except IndexError as e:  # TODO rewrite Profile for better error handling.
+    except IndexError as e:  # TODO: Rewrite Profile for better error handling.
         return None

@@ -46,7 +46,7 @@ from pprint import pprint as print
 
 scraped_tweets = []
 for tweet in scrape_users_tweets("seekingalpha", max_tickers=10, break_on_id=tweet_id):
-    scraped_tweets += tweet.get_tweet_symbols()
+    scraped_tweets += tweet.get_twitter_symbols()
 
 print(TwitterSymbolList(tweets=scraped_tweets).json())
 

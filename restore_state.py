@@ -21,8 +21,8 @@ date_paths = list(set(path.stem for path in DATA_DIRECTORY.glob("*")))
 
 for path in date_paths:
 
-    dir_dt = pendulum.from_format(path, "YYYY_MM_DD")
-    older_than_yesterday = dir_dt < pendulum.yesterday()
+    dir_dt = pendulum.from_format(path, "YYYY_MM_DD", tz="UTC")
+    older_than_yesterday = dir_dt < pendulum.yesterday(tz="UTC")
 
     if older_than_yesterday:
         # shutil.rmtree(path)
