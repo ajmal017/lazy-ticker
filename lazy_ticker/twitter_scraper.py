@@ -9,10 +9,11 @@ from lazy_ticker.schemas import TwitterUserSchema, TweetSchema
 from lazy_ticker.configuration import Configuration
 
 TWITTER_MAX_PAGE_SEARCH = Configuration.TWITTER_MAX_PAGE_SEARCH
+TWITTER_MAX_TICKERS_PER_USER = Configuration.TWITTER_MAX_TICKERS_PER_USER
 
 
 @validate_arguments
-def scrape_users_tweets(user: str, max_tickers: int, break_on_id=Optional[int]) -> TweetSchema:
+def scrape_users_tweets(user: str, break_on_id=Optional[int]) -> TweetSchema:
     tickers_found = 0
 
     for tweet in get_tweets(user, pages=TWITTER_MAX_PAGE_SEARCH):
@@ -28,7 +29,7 @@ def scrape_users_tweets(user: str, max_tickers: int, break_on_id=Optional[int]) 
         if tweet.symbols:
             tickers_found += len(tweet.symbols)
 
-            if tickers_found >= max_tickers:
+            if tickers_found >= TWITTER_MAX_TICKERS_PER_USER:
                 break
 
             else:

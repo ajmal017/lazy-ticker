@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, DateTime, BigInteger, UniqueConstraint
+from sqlalchemy import Column, Integer, String, DateTime, BigInteger, UniqueConstraint, Boolean
 from sqlalchemy.ext.declarative import declarative_base
 from datetime import datetime
 
@@ -26,6 +26,7 @@ class TwitterSymbolsTable(TwitterModelBase):
     tweet_id = Column(BigInteger)
     published_time = Column(DateTime)  # Index ?
     symbol = Column(String)
+    valid = Column(Boolean, nullable=True)
 
     __table_args__ = (UniqueConstraint("tweet_id", "symbol"),)
 

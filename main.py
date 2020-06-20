@@ -18,6 +18,7 @@ async def get_all_users():
 # TODO added cache for same request
 @app.post("/user/{username}", status_code=201)
 async def add_user(username: str, response: Response):
+    # TODO: parse @ symbols. Maybe use regex
     user_id = get_user_id(username)
     if user_id:
         LazyDB.add_user(name=username, user_id=user_id)

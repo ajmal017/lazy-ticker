@@ -39,8 +39,8 @@ class LazyDB:
         try:
             yield session
         except IntegrityError as e:
-            logger.debug(e)
             session.rollback()
+            logger.debug(e)
         except:
             session.rollback()
             raise
@@ -74,6 +74,17 @@ class LazyDB:
             )
 
     @classmethod
+    def update_users_last_tweet(cls, name: str, last_tweet_id: int):
+        with cls.session_manager() as session:
+            query = (
+                session.query(TwitterUsersTable)
+                .filter(TwitterUsersTable.name == name)
+                .one_or_none()
+            )
+            query.last_tweet_id = last_tweet_id
+            session.commit()
+
+    @classmethod
     def get_all_users(cls):
         with cls.session_manager() as session:
             return session.query(TwitterUsersTable).order_by("date").all()
@@ -98,9 +109,7 @@ class LazyDB:
                 )
                 exists = session.query(query.exists()).scalar()
                 if not exists:
-                    logger.debug("A tweet did not exist!")
-                    logger.error(tweet)
-                    logger.error(exists)
+                    logger.error(f"{tweet} does not exists in the database.")
                     return False
             else:
                 return True

@@ -42,6 +42,8 @@ services:
             - 8082:8082
         networks:
             - lazy_network
+        volumes:
+            - ./luigi_daemon.cfg:/etc/luigi/luigi.cfg:ro
         environment:
             DATABASE_IP: lazydb
             DATABASE_PORT: 5432
@@ -58,6 +60,7 @@ services:
             - lazy_network
         volumes:
             - .:/app
+            - ./luigi_client.cfg:/etc/luigi/luigi.cfg:ro
         environment:
             DATABASE_IP: lazydb
             DATABASE_PORT: 5432

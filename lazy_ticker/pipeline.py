@@ -14,9 +14,6 @@ import sys
 import json
 
 
-logger.add(sys.stdout, colorize=True, format="<green>{time}</green> <level>{message}</level>")
-
-
 @pydantic.validate_arguments
 def convert_date_to_string(date: date):
     underscore_string = str(date).replace("-", "_")
@@ -40,7 +37,7 @@ def make_check_directory(target: LocalTarget, parents: bool = False):
     assert output_path.exists()
 
 
-def input_path_target_output(input_target: LocalTarget, path: str):
+def input_path_target_output(input_target: LocalTarget, path: str):  # TODO FIND BETTER NAME
     input_path = convert_to_path(input_target)
     target_path = input_path / path
     return convert_to_target(target_path)
@@ -101,7 +98,7 @@ class GetSingleUserTweets(Task):
         break_id = self.user.last_tweet_id  # NOTE: Dont forget to insert last tweet in the end
 
         scraped_tweets = []
-        for tweet in scrape_users_tweets(self.user.name, max_tickers=10, break_on_id=break_id):
+        for tweet in scrape_users_tweets(self.user.name, break_on_id=break_id):
             scraped_tweets += tweet.get_tweet_symbols()
 
         symbols = TwitterSymbolList(tweets=scraped_tweets)
@@ -121,22 +118,15 @@ class AddTweetToDatabase(Task):
 
     def complete(self):
         input_path = convert_to_path(self.input())
-        logger.debug(self.user)
+        logger.debug(f"{self.user} | checking complete.")
         if input_path.exists():
-            logger.debug("input_path exists")
             with open(input_path, mode="r") as read_file:
                 tweets = json.load(read_file)["tweets"]
 
-            logger.debug(f"the tweet len is {len(tweets)}")
-
-            logger.debug("Checking if tweets is empty.")
             if len(tweets) < 1:  # NOTE Maybe and is empty method
-                logger.debug("tweets are empty")
                 return True
 
-            logger.debug("checking all tweets exists")
             if LazyDB.check_all_tweets_exists(tweets):
-                logger.debug("All tweets exists returning true.")
                 return True
 
         return False
@@ -147,16 +137,13 @@ class AddTweetToDatabase(Task):
         with open(input_path, mode="r") as read_file:
             tweets = json.load(read_file)["tweets"]
 
-        logger.debug(tweets)
+        logger.info(f"Found {len(tweets)} new tickers from @{self.user.name}.")
 
         LazyDB.add_tweets(tweets)
 
         if len(tweets) > 0:  # NOTE: Maybe an is empty method
-            last_tweet = tweets[0]
-            logger.debug("last tweet it")
-            logger.debug(last_tweet)
-
-        # update users last tweet_id
+            tweet_id = tweets[0]["tweet_id"]
+            LazyDB.update_users_last_tweet(name=self.user.name, last_tweet_id=tweet_id)
 
 
 class PiplineWrapper(WrapperTask):
@@ -178,7 +165,8 @@ def process_job(timestamp):
     print("processing job", timestamp, dt, dt.timezone_name)
     print(f"data/{date}/users/{timestamp}.json")
 
-    luigi.build([PiplineWrapper(timestamp=timestamp)], local_scheduler=False)
+    luigi.build([PiplineWrapper(timestamp=timestamp)], workers=3, local_scheduler=False)
+    # TODO: Add workers to config
 
 
 def start_pipeline_loop(*, minute_interval: int, sleep_interval: int = 1):
@@ -198,7 +186,7 @@ def start_pipeline_loop(*, minute_interval: int, sleep_interval: int = 1):
                     sleep(sleep_interval)
                 else:
                     process_job(period.int_timestamp)
-                    # clean_up_job(start) remove folders older than start task
+                    # TODO: clean_up_job(start) remove folders older than start task
 
 
 def wait():
