@@ -31,7 +31,7 @@ services:
             POSTGRES_PASSWORD: lazysecret
         ports:
             - 5432:5432
-        command: ["postgres", "-c", "log_error_verbosity=terse"]
+        command: ["-c", "log_error_verbosity=terse"]
         networks:
             - lazy_network
 

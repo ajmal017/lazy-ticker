@@ -5,7 +5,7 @@ from lazy_ticker.schemas import (
     TwitterSymbolList,
     TweetSchema,
 )
-from lazy_ticker.twitter_scraper import scrape_users_tweets, get_user_id
+from lazy_ticker.twitter_scraper import scrape_users_tweets, scrape_user_id
 from lazy_ticker.database import LazyDB
 
 import pydantic
@@ -13,7 +13,7 @@ from typing import List
 
 #
 # #
-# x = get_user_id("dgnsrek")
+# x = scrape_user_id("dgnsrek")
 # print(x)
 from pathlib import Path
 import json

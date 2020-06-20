@@ -1,5 +1,5 @@
 import pydantic
-from typing import List
+from typing import List, Optional
 from enum import Enum
 
 
@@ -25,7 +25,7 @@ class Exchange(str, Enum):
     PINK = "Pink Sheet"
     UNKOWN = "Unknown"
 
-    def convert_to_tradingview_exchange(self) -> str:
+    def convert_to_tradingview_exchange(self) -> Optional[str]:
         if self is self.PACIFIC:
             return self.AMEX.value
         elif self is self.PINK:

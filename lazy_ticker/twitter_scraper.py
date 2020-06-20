@@ -13,7 +13,7 @@ TWITTER_MAX_TICKERS_PER_USER = Configuration.TWITTER_MAX_TICKERS_PER_USER
 
 
 @validate_arguments
-def scrape_users_tweets(user: str, break_on_id=Optional[int]) -> TweetSchema:
+def scrape_users_tweets(user: str, break_on_id: Optional[int] = None) -> TweetSchema:
     tickers_found = 0
 
     for tweet in get_tweets(user, pages=TWITTER_MAX_PAGE_SEARCH):
@@ -36,8 +36,7 @@ def scrape_users_tweets(user: str, break_on_id=Optional[int]) -> TweetSchema:
                 yield tweet
 
 
-#
-def get_user_id(username: str) -> int:
+def scrape_user_id(username: str) -> Optional[int]:
     try:
         return int(Profile(username).user_id)
     except IndexError as e:  # TODO rewrite Profile for better error handling.

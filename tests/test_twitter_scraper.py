@@ -1,9 +1,9 @@
 import pytest
 
-from lazy_ticker.twitter_scraper import get_user_id
+from lazy_ticker.twitter_scraper import scrape_user_id
 
 
-def test_get_user_id():
-    resulted_user_id = get_user_id("dgnsrekt")
+def test_scrape_user_id():
+    resulted_user_id = scrape_user_id("dgnsrekt")
     expected_user_id = 2474416796
     assert resulted_user_id == expected_user_id
