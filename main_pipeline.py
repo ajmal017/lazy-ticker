@@ -10,16 +10,11 @@ import requests
 
 
 def restore_usertable_from_previous_states():
-    # TODO: add config flag return on false
-    url = "http://backend/user"
-    # NOTE: will have to be set from docker env
-    # NOTE: will probably have to add to configuration obj
-
     if DATA_DIRECTORY.exists():
         users = list(set(path.stem for path in DATA_DIRECTORY.glob("**/*.json")))
         for user in users:
             logger.debug(f"restoring {user} from previous state.")
-            resp = requests.post(f"{url}/{user}")
+            resp = requests.post(f"http://backend/user/{user}")
             assert resp.status_code == 201
 
 
