@@ -128,6 +128,8 @@ class InsertTweetsInToDatabase(Task):
                 return True
 
             if LazyDB.check_all_tweets_exists(tweets):
+                tweet_id = tweets[0]["tweet_id"]
+                LazyDB.update_users_last_tweet(name=self.user.name, last_tweet_id=tweet_id)
                 return True
 
         return False
@@ -142,104 +144,12 @@ class InsertTweetsInToDatabase(Task):
 
         LazyDB.add_tweets(tweets)
 
-        if len(tweets) > 0:
-            tweet_id = tweets[0]["tweet_id"]
-            LazyDB.update_users_last_tweet(name=self.user.name, last_tweet_id=tweet_id)
-
 
 class TwitterScraperPipline(WrapperTask):
     timestamp = luigi.IntParameter()
     users = luigi.Parameter()
 
     def requires(self):
-        # move get_all_users out.
-        # Allows to start from an old state
-        # have config option which allow restart from previous state
         return [
             InsertTweetsInToDatabase(timestamp=self.timestamp, user=user) for user in self.users
         ]
-
-
-from time import sleep
-import pendulum
-
-
-def process_job(timestamp):
-    dt = pendulum.from_timestamp(timestamp, tz="UTC")
-    date = dt.date()
-
-    logger.debug("processing job", timestamp, dt, dt.timezone_name)
-    logger.debug(f"data/{date}/users/{timestamp}.json")
-
-    # if get_all_users is empty
-    # if config says restart from old state
-    # than add users from old state
-
-    # TODO: Add workers to config | TODO: dive into luigi config
-    users = LazyDB.get_all_users()
-
-    if not users:
-        # restore user table from last state
-        pass
-
-    luigi.build(
-        [TwitterScraperPipline(timestamp=timestamp, users=users)], workers=3, local_scheduler=False
-    )
-    # TODO: pipeline_task_successful =
-    # NOTE: look up external tasks
-    # validate symbols pipe
-    # get all distinct symbols / null valid
-    # get all instruments
-    # compare.
-    # any distinct symbols that are in instruments mark valid = True
-
-    # get all distinct symbols / null valid
-    # seach tda to look for valid symbols iter 500 at a time
-    # mark rows valid = True
-
-    # mark all other rows valid = False
-
-    # remove any invalid rows
-
-    # build watchlist one
-    # build watchlist two
-
-    # clean up task is optional. conig option
-    # only clean up if all the above tasks were successful and cleanup task setting is true
-
-    # clean up data folder date > 24 hours | max days back configuration | older than n days setting
-
-
-def start_pipeline_loop(*, minute_interval: int, sleep_interval: int = 1):
-
-    while True:
-        now = pendulum.now("UTC")
-        start = now.subtract(minutes=now.minute, seconds=now.second, microseconds=now.microsecond)
-        end = pendulum.tomorrow("UTC")
-
-        periods = list(pendulum.period(start, end).range("minutes", minute_interval))
-
-        for period in periods:
-            if pendulum.now("UTC") > period:
-                continue
-            else:
-                while pendulum.now("UTC") < period:
-                    sleep(sleep_interval)
-                else:
-                    process_job(period.int_timestamp)
-                    # TODO: clean_up_job(start) remove folders older than start task
-
-
-def wait():
-    logger.debug("waiting")
-    for _ in range(5):
-        sleep(1)
-
-
-# from multiprocessing import Process
-# p2 = Process(target=start_pipeline_loop, args=(1,))
-# p2.start()
-# p2.join()
-#
-wait()
-start_pipeline_loop(minute_interval=1)

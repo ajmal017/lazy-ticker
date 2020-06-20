@@ -37,9 +37,6 @@ class LazyDB:
         session = Session()
         try:
             yield session
-        except IntegrityError as e:
-            session.rollback()
-            logger.debug(e)
         except:
             session.rollback()
             raise
@@ -50,8 +47,12 @@ class LazyDB:
     def add_user(cls, name: str, user_id: int):
         with cls.session_manager() as session:
             user = TwitterUsersTable(name=name, user_id=user_id)
+        try:
             session.add(user)
             session.commit()
+        except IntegrityError as e:
+            session.rollback()
+            logger.debug(e)
             return user
 
     @classmethod
@@ -89,18 +90,20 @@ class LazyDB:
             return session.query(TwitterUsersTable).order_by("date").all()
 
     @classmethod
-    def add_tweets(
-        cls, tweets: List[dict]
-    ):  # should take a list of tweets to keep the same port open
+    def add_tweets(cls, tweets: List[dict]):
         with cls.session_manager() as session:
             for tweet in tweets:
-                tweet = TwitterSymbolsTable(**tweet)
-                session.add(tweet)
-                session.commit()
+                try:
+                    tweet = TwitterSymbolsTable(**tweet)
+                    session.add(tweet)
+                    session.commit()
+                except IntegrityError as e:
+                    session.rollback()
+                    logger.debug(e)
 
     @classmethod
     @validate_arguments
-    def check_all_tweets_exists(cls, tweets: List[dict]):  # should pass list of all ids
+    def check_all_tweets_exists(cls, tweets: List[dict]):
         with cls.session_manager() as session:
             for tweet in tweets:
                 query = session.query(TwitterSymbolsTable.tweet_id).filter(
