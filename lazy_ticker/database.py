@@ -1,6 +1,7 @@
+import sys
 from contextlib import contextmanager
 
-from lazy_ticker.models import InstrumentBase, InstrumentsTable
+from lazy_ticker.models import InstrumentBaseModel, InstrumentsTable
 from lazy_ticker.models import TwitterModelBase, TwitterUsersTable, TwitterSymbolsTable
 
 from datetime import datetime, timedelta
@@ -10,89 +11,109 @@ from sqlalchemy import desc
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.exc import IntegrityError
 
+from typing import List
+from pydantic import validate_arguments
+
 from lazy_ticker.configuration import Configuration
+
+from loguru import logger
+
+DATABASE_URI = Configuration.get_database_uri()
+logger.add(sys.stdout, colorize=True, format="<green>{time}</green> <level>{message}</level>")
 
 
 class LazyDB:
-    DATABASE_URI = Configuration.get_database_uri()
+    @staticmethod
+    def create_session():
+        engine = create_engine(DATABASE_URI)
+        InstrumentBaseModel.metadata.create_all(engine)
+        TwitterModelBase.metadata.create_all(engine)
+        return sessionmaker(bind=engine)
 
     @classmethod
     @contextmanager
-    def connect(cls):
-        engine = create_engine(cls.DATABASE_URI)
-        InstrumentBase.metadata.create_all(engine)
-        TwitterModelBase.metadata.create_all(engine)
+    def session_manager(cls):
+        Session = cls.create_session()
 
-        Session = sessionmaker(bind=engine)
-        yield Session
-
-    @classmethod
-    def test_database_connection(cls):
-        with cls.connect() as Session:
-            session = Session()
+        session = Session()
+        try:
+            yield session
+        except IntegrityError as e:
+            logger.debug(e)
+            session.rollback()
+        except:
+            session.rollback()
+            raise
+        finally:
             session.close()
 
     @classmethod
     def add_user(cls, name: str, user_id: int):
-        with cls.connect() as Session:
-            session = Session()
-            try:
-                twitter_user = TwitterUsersTable(name=name, user_id=user_id)
-                session.add(twitter_user)
-                session.commit()
-                session.close()
-                return twitter_user
-
-            except IntegrityError:
-                session.rollback()
-                session.close()
-                return twitter_user
+        with cls.session_manager() as session:
+            user = TwitterUsersTable(name=name, user_id=user_id)
+            session.add(user)
+            session.commit()
+            return user
 
     @classmethod
     def remove_user(cls, name: str):
-        with cls.connect() as Session:
-            session = Session()
-            query = session.query(TwitterUsersTable).filter(TwitterUsersTable.name == name).first()
-            if query:
-                session.delete(query)
-                session.commit()
-            session.close()
+        with cls.session_manager() as session:
+            query = (
+                session.query(TwitterUsersTable).filter(TwitterUsersTable.name == name).delete()
+            )
+            session.commit()
             return query
 
     @classmethod
     def get_user(cls, name: str):
-        with cls.connect() as Session:
-            session = Session()
-            return session.query(TwitterUsersTable).filter(TwitterUsersTable.name == name).first()
+        with cls.session_manager() as session:
+            return (
+                session.query(TwitterUsersTable)
+                .filter(TwitterUsersTable.name == name)
+                .one_or_none()
+            )
 
     @classmethod
     def get_all_users(cls):
-        with cls.connect() as Session:
-            session = Session()
+        with cls.session_manager() as session:
             return session.query(TwitterUsersTable).order_by("date").all()
 
     @classmethod
-    def add_tweet(cls, tweet: dict):  # should take a list of tweets to keep the same port open
-        with cls.connect() as Session:
-            session = Session()
-            try:
+    def add_tweets(
+        cls, tweets: List[dict]
+    ):  # should take a list of tweets to keep the same port open
+        with cls.session_manager() as session:
+            for tweet in tweets:
                 tweet = TwitterSymbolsTable(**tweet)
                 session.add(tweet)
                 session.commit()
-                session.close()
-                return tweet
-
-            except IntegrityError:
-                session.rollback()
-                session.close()
-                return tweet
 
     @classmethod
-    def tweet_id_exists(cls, tweet_id: int):  # should pass list of all ids
-        with cls.connect() as Session:
-            session = Session()
-            return session.query(TwitterSymbolsTable).filter(TwitterSymbolsTable.tweet_id == tweet_id).scalar()
+    @validate_arguments
+    def check_all_tweets_exists(cls, tweets: List[dict]):  # should pass list of all ids
+        with cls.session_manager() as session:
+            for tweet in tweets:
+                query = session.query(TwitterSymbolsTable.tweet_id).filter(
+                    TwitterSymbolsTable.tweet_id == tweet["tweet_id"]
+                )
+                exists = session.query(query.exists()).scalar()
+                if not exists:
+                    logger.debug("A tweet did not exist!")
+                    logger.error(tweet)
+                    logger.error(exists)
+                    return False
+            else:
+                return True
 
+    # @classmethod
+    # def tweet_id_exists(cls, tweet_id: int):  # should pass list of all ids
+    #     with cls.session_manager() as session:
+    #         return (
+    #             session.query(TwitterSymbolsTable)
+    #             .filter(TwitterSymbolsTable.tweet_id == tweet_id)
+    #             .scalar()
+    #         )
+    #
     # @classmethod
     # def query_tweets_by_date_added(cls, date_added: datetime):
     #     with cls.connect() as Session:

@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, DateTime, BigInteger
+from sqlalchemy import Column, Integer, String, DateTime, BigInteger, UniqueConstraint
 from sqlalchemy.ext.declarative import declarative_base
 from datetime import datetime
 
@@ -23,9 +23,11 @@ class TwitterSymbolsTable(TwitterModelBase):
 
     id = Column(Integer, index=True, primary_key=True)
     user_id = Column(BigInteger)
-    tweet_id = Column(BigInteger, unique=True)
+    tweet_id = Column(BigInteger)
     published_time = Column(DateTime)  # Index ?
     symbol = Column(String)
+
+    __table_args__ = (UniqueConstraint("tweet_id", "symbol"),)
 
     def __repr__(self):
         return f"<{self.user_id}:{self.tweet_id}>"

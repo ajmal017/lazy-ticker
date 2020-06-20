@@ -27,6 +27,10 @@ class TwitterSymbolSchema(pydantic.BaseModel):
         orm_mode = True
 
 
+class TwitterSymbolList(pydantic.BaseModel):
+    tweets: List[TwitterSymbolSchema]
+
+
 class TweetSchema(pydantic.BaseModel):
     text: str
     published_time: datetime = pydantic.Field(alias="time")
@@ -45,13 +49,15 @@ class TweetSchema(pydantic.BaseModel):
         matched_symbols = regex_symbol.findall(text)
 
         if len(matched_symbols) > 0:
-            return [cls.clean_symbol(symbol) for symbol in matched_symbols]
+            return list(set([cls.clean_symbol(symbol) for symbol in matched_symbols]))
         else:
             return []
 
     def populate_symbols(self) -> None:
         self.symbols = self.parse_symbols_from_text(self.text)
 
-    def get_tweet_symbols(self) -> TwitterSymbolSchema:
-        for symbol in self.symbols:
-            yield TwitterSymbolSchema(**self.dict(), symbol=symbol)
+    def get_tweet_symbols(self) -> List[TwitterSymbolSchema]:
+        return [TwitterSymbolSchema(**self.dict(), symbol=symbol) for symbol in self.symbols]
+
+    def __repr__(self):
+        return f"<{self.__class__.__name__} id={self.tweet_id}>"

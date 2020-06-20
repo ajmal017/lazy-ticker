@@ -1,10 +1,10 @@
 import luigi
 from luigi import LocalTarget, Task, WrapperTask
 import pydantic
-from lazy_ticker.paths import PROJECT_ROOT
+from lazy_ticker.paths import DATA_DIRECTORY
+from lazy_ticker.schemas import TwitterSymbolList
 from lazy_ticker.database import LazyDB
-from lazy_ticker.schemas import TwitterUserSchemaList, TweetSchemaContainer
-from lazy_ticker.twitter_scraper import get_symbols_from_tweets
+from lazy_ticker.twitter_scraper import scrape_users_tweets
 from pathlib import Path
 from time import sleep
 import pendulum
@@ -13,7 +13,6 @@ from loguru import logger
 import sys
 import json
 
-DATA_DIRECTORY = PROJECT_ROOT / "data"
 
 logger.add(sys.stdout, colorize=True, format="<green>{time}</green> <level>{message}</level>")
 
@@ -35,83 +34,38 @@ def convert_to_path(target: LocalTarget):
     return Path(target.path)
 
 
-def make_check_directory(target: LocalTarget):
+def make_check_directory(target: LocalTarget, parents: bool = False):
     output_path = convert_to_path(target)
-    output_path.mkdir()
+    output_path.mkdir(parents=parents)
     assert output_path.exists()
 
 
-class MakeDataDirectory(Task):
-    def output(self):
-        return convert_to_target(DATA_DIRECTORY)
-
-    def run(self):
-        make_check_directory(self.output())
+def input_path_target_output(input_target: LocalTarget, path: str):
+    input_path = convert_to_path(input_target)
+    target_path = input_path / path
+    return convert_to_target(target_path)
 
 
-class CreateDateDirectory(Task):
+class MakeDateDirectory(Task):
     timestamp = luigi.IntParameter()  # add description
 
-    def requires(self):
-        return MakeDataDirectory()
-
     def output(self):
-        data_directory = convert_to_path(self.input())
-        date_ = pendulum.from_timestamp(self.timestamp).date()
-        target_directory = data_directory / convert_date_to_string(date_)
+        processing_date = pendulum.from_timestamp(self.timestamp).date()
+        target_directory = DATA_DIRECTORY / convert_date_to_string(processing_date)
         return convert_to_target(target_directory)
 
     def run(self):
-        make_check_directory(self.output())
-
-
-class CreateUsersDirectory(Task):
-    timestamp = luigi.IntParameter()  # add description
-
-    def requires(self):
-        return CreateDateDirectory(self.timestamp)
-
-    def output(self):
-        current_date_directory = convert_to_path(self.input())
-        target_directory = current_date_directory / "users"
-        return convert_to_target(target_directory)
-
-    def run(self):
-        make_check_directory(self.output())
-
-
-class GetUserList(Task):
-    timestamp = luigi.IntParameter()  # add description
-
-    def requires(self):
-        return CreateUsersDirectory(self.timestamp)
-
-    def output(self):
-        current_users_directory = convert_to_path(self.input())
-        target_file = current_users_directory / f"{self.timestamp}.json"
-        return convert_to_target(target_file)
-
-    def run(self):
-        all_users = LazyDB.get_all_users()
-        all_users_json = TwitterUserSchemaList.parse_obj(all_users).json()
-        output_path = convert_to_path(self.output())
-
-        with open(output_path, mode="w") as user_write_file:
-            user_write_file.write(all_users_json)
-
-        assert output_path.exists()
+        make_check_directory(self.output(), parents=True)
 
 
 class CreateTweetsDirectory(Task):
     timestamp = luigi.IntParameter()  # add description
 
     def requires(self):
-        return CreateDateDirectory(self.timestamp)
+        return MakeDateDirectory(self.timestamp)
 
     def output(self):
-        current_date_directory = convert_to_path(self.input())
-        target_directory = current_date_directory / "tweets"
-        return convert_to_target(target_directory)
+        return input_path_target_output(self.input(), "tweets")
 
     def run(self):
         make_check_directory(self.output())
@@ -124,9 +78,8 @@ class CreateTimeStampTweetDirectory(Task):
         return CreateTweetsDirectory(self.timestamp)
 
     def output(self):
-        current_date_directory = convert_to_path(self.input())
-        target_directory = current_date_directory / str(self.timestamp)
-        return convert_to_target(target_directory)
+        target_path = str(self.timestamp)
+        return input_path_target_output(self.input(), target_path)
 
     def run(self):
         make_check_directory(self.output())
@@ -134,57 +87,56 @@ class CreateTimeStampTweetDirectory(Task):
 
 class GetSingleUserTweets(Task):
     timestamp = luigi.IntParameter()  # add description
-    username = luigi.Parameter()
+    user = luigi.Parameter()  # should be user obj
 
     def requires(self):
         return CreateTimeStampTweetDirectory(self.timestamp)
 
     def output(self):
-        current_date_directory = convert_to_path(self.input())
-        target_file = current_date_directory / (self.username + ".json")
-        return convert_to_target(target_file)
+        target_file = self.user.name + ".json"
+        return input_path_target_output(self.input(), target_file)
 
     def run(self):
         output_path = convert_to_path(self.output())
-        tweets_with_symbols = []
+        break_id = self.user.last_tweet_id  # NOTE: Dont forget to insert last tweet in the end
 
-        for preprocessed in get_symbols_from_tweets(self.username, max_tickers=100, max_pages=2):
-            for tweet in preprocessed.process_symbols():
-                tweets_with_symbols.append(tweet)
-                logger.debug(tweet)
-                logger.debug(type(tweet))
+        scraped_tweets = []
+        for tweet in scrape_users_tweets(self.user.name, max_tickers=10, break_on_id=break_id):
+            scraped_tweets += tweet.get_tweet_symbols()
 
-        logger.debug(f"TWEETS WITH SYMBOLS!!! {tweets_with_symbols}")
-        container = TweetSchemaContainer(
-            __root__=tweets_with_symbols
-        )  # NOTE Maybe easier with a json
-        logger.debug(f"container!!! {container}")
-
+        symbols = TwitterSymbolList(tweets=scraped_tweets)
+        #
         with open(output_path, mode="w") as tweet_write_file:
-            tweet_write_file.write(container.json())
+            tweet_write_file.write(symbols.json())
 
         assert output_path.exists()
 
 
 class AddTweetToDatabase(Task):
     timestamp = luigi.IntParameter()  # add description
-    username = luigi.Parameter()
+    user = luigi.Parameter()
 
     def requires(self):
-        return GetSingleUserTweets(timestamp=self.timestamp, username=self.username)
+        return GetSingleUserTweets(timestamp=self.timestamp, user=self.user)
 
     def complete(self):
         input_path = convert_to_path(self.input())
+        logger.debug(self.user)
         if input_path.exists():
+            logger.debug("input_path exists")
             with open(input_path, mode="r") as read_file:
-                data = json.load(read_file)
+                tweets = json.load(read_file)["tweets"]
 
-            for tweet in data:
-                assert LazyDB.tweet_id_exists(
-                    int(tweet["tweet_id"])
-                )  # should pass all tweets to function
-                # assert int(tweet["tweet_id"]) == int(q.tweet_id)
-            else:
+            logger.debug(f"the tweet len is {len(tweets)}")
+
+            logger.debug("Checking if tweets is empty.")
+            if len(tweets) < 1:  # NOTE Maybe and is empty method
+                logger.debug("tweets are empty")
+                return True
+
+            logger.debug("checking all tweets exists")
+            if LazyDB.check_all_tweets_exists(tweets):
+                logger.debug("All tweets exists returning true.")
                 return True
 
         return False
@@ -193,26 +145,26 @@ class AddTweetToDatabase(Task):
         input_path = convert_to_path(self.input())
 
         with open(input_path, mode="r") as read_file:
-            data = json.load(read_file)
+            tweets = json.load(read_file)["tweets"]
 
-        for tweet in data:
-            LazyDB.add_tweet(tweet)  # should pass all tweets to function
-            logger.debug(f"added {tweet}")
+        logger.debug(tweets)
+
+        LazyDB.add_tweets(tweets)
+
+        if len(tweets) > 0:  # NOTE: Maybe an is empty method
+            last_tweet = tweets[0]
+            logger.debug("last tweet it")
+            logger.debug(last_tweet)
+
+        # update users last tweet_id
 
 
 class PiplineWrapper(WrapperTask):
     timestamp = luigi.IntParameter()  # add description
 
     def requires(self):
-        all_users = LazyDB.get_all_users()
-        return [
-            AddTweetToDatabase(timestamp=self.timestamp, username=user.name) for user in all_users
-        ]
-
-        # return [
-        #     GetSingleUserTweets(timestamp=self.timestamp, username=user)
-        #     for user in ["seekingalpha", "wallstjesus", "no_pullbacks", "dgnsrekt"]
-        # ]
+        users = LazyDB.get_all_users()
+        return [AddTweetToDatabase(timestamp=self.timestamp, user=user) for user in users]
 
 
 from time import sleep
