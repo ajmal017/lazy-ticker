@@ -151,6 +151,9 @@ class PiplineWrapper(WrapperTask):
 
     def requires(self):
         users = LazyDB.get_all_users()
+        # move get_all_users out.
+        # Allows to start from an old state
+        # have config option which allow restart from previous state
         return [AddTweetToDatabase(timestamp=self.timestamp, user=user) for user in users]
 
 
@@ -165,8 +168,14 @@ def process_job(timestamp):
     print("processing job", timestamp, dt, dt.timezone_name)
     print(f"data/{date}/users/{timestamp}.json")
 
-    # TODO: Add workers to config
+    # if get_all_users is empty
+    # if config says restart from old state
+    # than add users from old state
+
+    # TODO: Add workers to config | TODO: dive into luigi config
     luigi.build([PiplineWrapper(timestamp=timestamp)], workers=3, local_scheduler=False)
+    # TODO: pipeline_task_successful =
+    # NOTE: look up external tasks
     # validate symbols pipe
     # get all distinct symbols / null valid
     # get all instruments
@@ -183,7 +192,11 @@ def process_job(timestamp):
 
     # build watchlist one
     # build watchlist two
-    # clean up data folder date > 24 hours
+
+    # clean up task is optional. conig option
+    # only clean up if all the above tasks were successful and cleanup task setting is true
+
+    # clean up data folder date > 24 hours | max days back configuration | older than n days setting
 
 
 def start_pipeline_loop(*, minute_interval: int, sleep_interval: int = 1):
