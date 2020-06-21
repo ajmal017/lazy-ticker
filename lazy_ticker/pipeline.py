@@ -105,7 +105,7 @@ class ScrapeUsersTweets(Task):
         symbols = TwitterSymbolList(tweets=scraped_tweets)
 
         with open(output_path, mode="w") as write_file:
-            write_file.write(symbols.json())
+            write_file.write(symbols.json(indent=4))
 
         assert output_path.exists()
 
