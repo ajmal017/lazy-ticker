@@ -1,4 +1,4 @@
-from lazy_ticker.schemas.instrument import InstrumentSchema
+from lazy_ticker.schemas.instrument import InstrumentSchema, InstrumentsList
 from lazy_ticker.schemas.twitter import (
     TwitterUserSchema,
     TwitterSymbolSchema,
@@ -8,6 +8,7 @@ from lazy_ticker.schemas.twitter import (
 
 __all__ = [
     "InstrumentSchema",
+    "InstrumentsList",
     "TwitterUserSchema",
     "TwitterSymbolSchema",
     "TwitterSymbolList",

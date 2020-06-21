@@ -41,7 +41,8 @@ class TweetSchema(pydantic.BaseModel):
 
     @staticmethod
     def clean_symbol(ticker: str) -> str:
-        return ticker.replace("$", "")
+        regex = re.compile("[^a-zA-Z]")
+        return regex.sub("", ticker)
 
     @classmethod
     def parse_symbols_from_text(cls, text) -> List[str]:  # NOTE: Optional?

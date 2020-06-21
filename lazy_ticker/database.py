@@ -116,6 +116,52 @@ class LazyDB:
             else:
                 return True
 
+    @classmethod
+    def add_instruments(cls, instruments: List[dict]):
+        with cls.session_manager() as session:
+            for ticker in instruments:
+                try:
+                    instrument = InstrumentsTable(**ticker)
+                    session.add(instrument)
+                    session.commit()
+                except IntegrityError as e:
+                    session.rollback()
+                    logger.debug(e)
+
+    @classmethod
+    def get_instruments(cls):
+        with cls.session_manager() as session:
+            return [symbol.symbol for symbol in session.query(InstrumentsTable.symbol)]
+
+    @classmethod
+    def get_uncheck_symbols_from_tweets(cls):
+        with cls.session_manager() as session:
+            query = (
+                session.query(TwitterSymbolsTable).filter(TwitterSymbolsTable.valid == None).all()
+            )
+            return list(set([symbol.symbol for symbol in query]))
+
+    @classmethod
+    def update_tweets(cls, valid_symbols):
+        with cls.session_manager() as session:
+            for row in session.query(TwitterSymbolsTable).filter(
+                TwitterSymbolsTable.valid == None
+            ):
+                if row.symbol in valid_symbols:
+                    row.valid = True
+                else:
+                    row.valid = False
+                session.commit()
+
+    @classmethod
+    def delete_invalid_tweets(cls):
+        with cls.session_manager() as session:
+            delete_query = TwitterSymbolsTable.__table__.delete().where(
+                TwitterSymbolsTable.valid == False
+            )
+            session.execute(delete_query)
+            session.commit()
+
     # @classmethod
     # def tweet_id_exists(cls, tweet_id: int):  # should pass list of all ids
     #     with cls.session_manager() as session:

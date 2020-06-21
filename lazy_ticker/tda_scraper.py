@@ -3,13 +3,14 @@ from tda.client import Client as TDAClient
 
 from lazy_ticker.configuration import Configuration
 from lazy_ticker.paths import PROJECT_ROOT, LOCAL_CHROMEDRIVER_LOCATION
-from lazy_ticker.schemas import InstrumentSchema
+from lazy_ticker.schemas import InstrumentSchema, InstrumentsList
 
 from typing import List
 
 import pydantic
 from pydantic import validate_arguments
 from pydantic.error_wrappers import ValidationError
+from loguru import logger
 
 
 TOKEN_PATH = PROJECT_ROOT / "token.pickle"
@@ -36,7 +37,7 @@ def authenticate_client():
 
 
 @validate_arguments
-def get_instruments(symbols: List[str]) -> List[InstrumentSchema]:
+def get_instruments(symbols: List[str]) -> InstrumentsList:
     assert len(symbols) <= 500
     api = authenticate_client()
 
@@ -46,6 +47,11 @@ def get_instruments(symbols: List[str]) -> List[InstrumentSchema]:
 
     assert response.ok, response.raise_for_status()
 
-    data = list(response.json().values())
+    json_data = list(response.json().values())
 
-    return pydantic.parse_obj_as(List[InstrumentSchema], data)
+    try:
+        instruments = [InstrumentSchema(**data) for data in json_data]
+        return InstrumentsList(instruments=instruments)
+    except ValidationError as e:
+        logger.error(e)
+        logger.error(data)

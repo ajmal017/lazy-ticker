@@ -19,6 +19,7 @@ class AssetType(str, Enum):
 class Exchange(str, Enum):
     AMEX = "AMEX"
     BATS = "BATS"
+    IND = "IND"
     NYSE = "NYSE"
     NASDAQ = "NASDAQ"
     PACIFIC = "Pacific"
@@ -30,6 +31,8 @@ class Exchange(str, Enum):
             return self.AMEX.value
         elif self is self.PINK:
             return "OTC"
+        elif self is self.IND:
+            return "CBOE"
         elif self is self.UNKOWN:
             return None
         else:
@@ -59,6 +62,10 @@ class InstrumentSchema(pydantic.BaseModel):
                 tickers += [f"0-{self.symbol}"]
 
         return tickers
+
+
+class InstrumentsList(pydantic.BaseModel):
+    instruments: List[InstrumentSchema]
 
 
 if __name__ == "__main__":  # TODO Dump for tests.

@@ -1,16 +1,11 @@
 from lazy_ticker.tda_scraper import get_instruments
+from lazy_ticker.schemas import InstrumentsList
+from lazy_ticker.database import LazyDB
 from string import ascii_uppercase
 from random import choices
+from time import time
 
-
-def get_random_tickers(amount):
-    for _ in range(amount):
-        yield "".join(choices(ascii_uppercase, k=4))
-
-
-tickers = []
-for ticker in get_random_tickers(1000):
-    tickers.append(ticker)
+import re
 
 
 def divide_chunks(container, size):
@@ -18,5 +13,28 @@ def divide_chunks(container, size):
         yield container[position : position + size]
 
 
-for chunk in divide_chunks(tickers, 500):
-    print(get_instruments(chunk))
+#
+#
+# start = time()
+#
+#
+# valid_instruments = LazyDB.get_instruments()
+#
+# if valid_instruments:
+#     LazyDB.update_tweets(valid_instruments)
+#
+# uncheck_symbols = LazyDB.get_uncheck_symbols_from_tweets()
+#
+# if uncheck_symbols:
+#     for chunk in divide_chunks(uncheck_symbols, 500):
+#         valid = get_instruments(chunk).dict()["instruments"]
+#         LazyDB.add_instruments(valid)
+#
+#     valid_instruments = LazyDB.get_instruments()
+#     LazyDB.update_tweets(valid_instruments)
+#
+# LazyDB.delete_invalid_tweets()
+#
+#
+# end = time()
+# print(end - start)
