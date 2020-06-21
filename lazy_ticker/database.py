@@ -197,6 +197,9 @@ class LazyDB:
                     session.add(row)
                     session.commit()
 
+    # TODO: SHOULD BE ONE FUNCTION
+    # TODO: sort by time latest at top
+    # TODO: # should take timeframe as arg
     @classmethod
     def get_watchlist_symbols_within_last_month(cls):
         with cls.session_manager() as session:

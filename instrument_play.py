@@ -24,20 +24,18 @@ def divide_chunks(container, size):
 from pprint import pprint as print
 from time import sleep
 
-while True:
-    watch = LazyDB.get_watchlist_symbols_within_last_month()
-    print("=============month============")
-    print(watch)
-    watch = LazyDB.get_watchlist_symbols_within_last_week()
-    print("=============week============")
-    print(watch)
-    watch = LazyDB.get_watchlist_symbols_within_last_day()
-    print("=============day============")
-    print(watch)
-    watch = LazyDB.get_watchlist_symbols_within_last_hour()
-    print("=============hour============")
-    print(watch)
-    sleep(10)
+watch = LazyDB.get_watchlist_symbols_within_last_month()
+print("=============month============")
+print(watch)
+watch = LazyDB.get_watchlist_symbols_within_last_week()
+print("=============week============")
+print(watch)
+watch = LazyDB.get_watchlist_symbols_within_last_day()
+print("=============day============")
+print(watch)
+watch = LazyDB.get_watchlist_symbols_within_last_hour()
+print("=============hour============")
+print(watch)
 # build_watchlist_table()
 
 #

@@ -20,7 +20,7 @@ services:
             DATABASE_PASSWORD: lazysecret
         depends_on:
             - lazydb
-        entrypoint: ["/start-reload.sh"]
+        # entrypoint: ["/start-reload.sh"]
 
     lazydb:
         image: postgres:9.6

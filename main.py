@@ -75,6 +75,8 @@ async def get_watchlist(timeframe: TimeFrame):
     elif timeframe == TimeFrame.HOUR:
         watchlist = LazyDB.get_watchlist_symbols_within_last_hour()
 
+    print(watchlist)
+
     if watchlist:
         l = InstrumentsList(instruments=watchlist).create_list_tickers()
         return generate_file_response(l, f"{timeframe}.txt")

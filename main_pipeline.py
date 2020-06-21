@@ -78,7 +78,7 @@ def start_pipeline(timestamp):
     # TODO: Add workers to config
 
     twitter_scrape_successful = luigi.build(
-        [TwitterScraperPipline(timestamp=timestamp, users=users)], workers=3, local_scheduler=False
+        [TwitterScraperPipline(timestamp=timestamp, users=users)], workers=4, local_scheduler=False
     )
 
     if twitter_scrape_successful:
