@@ -31,6 +31,10 @@ async def add_user(username: str, response: Response):
         return {"message": f"{username} is an invalid account name."}
 
 
+# TODO: In the future it should delete all name.json from data folder.
+# or send a message to a clean up task which does the ^ job at the end
+# of a pipeline cycle.
+# IDEA: also removes all tweets with user_id
 @app.delete("/user/{username}")
 async def remove_user(username: str):
     if LazyDB.remove_user(name=username):

@@ -11,7 +11,11 @@ from lazy_ticker.configuration import Configuration
 TWITTER_MAX_PAGE_SEARCH = Configuration.TWITTER_MAX_PAGE_SEARCH
 TWITTER_MAX_TICKERS_PER_USER = Configuration.TWITTER_MAX_TICKERS_PER_USER
 
-
+# IDEA: maybe add a global backoff sleep time variable which gets increase
+# by one second between pages if a scrape fails.
+# should have a max sleep time.
+# BUG: ValueError: Oops! Either "dgnsrekt" does not exist or is private.
+# IDEA: rewrite the original get_tweets function to add the feature.
 @validate_arguments
 def scrape_users_tweets(user: str, break_on_id: Optional[int] = None) -> TweetSchema:
     tickers_found = 0

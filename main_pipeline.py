@@ -76,6 +76,7 @@ def start_pipeline(timestamp):
         restore_users_table_state_from_previous_data()
 
     # TODO: Add workers to config
+    # TODO: WORKERS_PER_CPU config
 
     twitter_scrape_successful = luigi.build(
         [TwitterScraperPipline(timestamp=timestamp, users=users)], workers=4, local_scheduler=False
