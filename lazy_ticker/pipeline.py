@@ -130,7 +130,7 @@ class InsertTweetsInToDatabase(Task):
 
             if LazyDB.check_all_tweets_exists(tweets):
                 last_tweet_id = tweets[0].tweet_id
-                LazyDB.update_users_last_tweet(name=self.user.name, last_tweet_id=last_tweet_id)
+                LazyDB.update_users_last_tweet_column(name=self.user.name, last_tweet_id=last_tweet_id)
                 return True
 
         return False

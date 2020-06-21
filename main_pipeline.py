@@ -24,82 +24,82 @@ def divide_chunks(container, size):
 
 
 # TODO: heavy refactoring needed
-def prepare_for_watchlist():
-    logger.debug("prepare_for_watchlist starts")
+def prepare_tables_for_watchlist():
+    logger.debug("prepare_tables_for_watchlist starts")
     valid_instruments = LazyDB.get_instruments()
 
     if valid_instruments:
-        LazyDB.update_tweets(valid_instruments)
+        LazyDB.update_tweet_validation_column(valid_instruments)
 
-    uncheck_symbols = LazyDB.get_uncheck_symbols_from_tweets()
+    unchecked_symbols = LazyDB.get_all_symbols_from_unchecked_tweets()
 
-    if uncheck_symbols:
-        for chunk in divide_chunks(uncheck_symbols, 500):
+    if unchecked_symbols:
+        for chunk in divide_chunks(unchecked_symbols, 500):
             valid = get_instruments(chunk).dict()["instruments"]
             LazyDB.add_instruments(valid)
 
         valid_instruments = LazyDB.get_instruments()
-        LazyDB.update_tweets(valid_instruments)
+        LazyDB.update_tweet_validation_column(valid_instruments)
 
-    LazyDB.delete_invalid_tweets()
+    LazyDB.delete_tweets_where_validation_column_is_false()
 
 
-def restore_users_table_from_previous_data():
+def restore_users_table_state_from_previous_data():
     # TODO: add config flag
     if DATA_DIRECTORY.exists():
         users = list(set(path.stem for path in DATA_DIRECTORY.glob("**/*.json")))
 
         for user in users:
             logger.debug(f"restoring {user} from previous state.")
-            # TODO you can animate this with progressbar.
             resp = requests.post(f"http://backend/user/{user}")
             assert resp.status_code == 201
+
+
+def build_watchlist_table():
+    logger.info("building watchlist")
+    tweets = LazyDB.get_all_tweets_sorted_by_published_time()
+    LazyDB.add_to_watchlist(tweets)
+    logger.info("watchlist built")
 
 
 def start_pipeline(timestamp):
     dt = pendulum.from_timestamp(timestamp, tz="UTC")
     date = dt.date()
 
-    logger.debug("processing job", timestamp, dt, dt.timezone_name)
-    logger.debug(f"data/{date}/users/{timestamp}.json")
+    logger.debug("processing", timestamp, dt, dt.timezone_name)
 
     users = LazyDB.get_all_users()
 
     if not users:
         logger.info("User table is empty.")
-        logger.info("Attempting to restore users from previous data")
-        restore_users_table_from_previous_data()
+        logger.info("Attempting to restore users table state from previous data")
+        restore_users_table_state_from_previous_data()
 
-    # TODO: Add workers to config | TODO: dive into luigi config
+    # TODO: Add workers to config
+
     twitter_scrape_successful = luigi.build(
         [TwitterScraperPipline(timestamp=timestamp, users=users)], workers=3, local_scheduler=False
     )
 
     if twitter_scrape_successful:
-        prepare_for_watchlist()  # better naming
-        logger.debug("prepare_for_watchlist complete!")
+        prepare_tables_for_watchlist()
+        logger.debug("prepare_tables_for_watchlist complete!")
+        build_watchlist_table()
     else:
         logger.debug("notification of twitter scraping issue")
         # TODO notification of scraping unsuccesful.
 
-    # build watchlist one
-    # build watchlist two
+    # clean_data_folder()
 
     # TODO: clean_up_job(start) remove folders older than start task
     # clean up task is optional. conig option
-    # only clean up if all the above tasks were successful and cleanup task setting is true
+    # only clean up if all the above tasks were successful and cleanup task setting is trueI
     # clean up data folder date > 24 hours | max days back configuration | older than n days setting
 
 
-def task_loop(*, minute_interval: int, sleep_interval: int = 1):
+def start_task_loop(*, minute_interval: int):
 
     logger.debug(f"sleeping for 10 seconds.")
-
-    for n in range(10, 0, -1):
-        logger.debug(f"{n}!")
-        sleep(1)
-    else:
-        logger.debug(f"go!")
 
     while True:
         now = pendulum.now("UTC")
@@ -113,9 +113,20 @@ def task_loop(*, minute_interval: int, sleep_interval: int = 1):
                 continue
             else:
                 while pendulum.now("UTC") < period:
-                    sleep(sleep_interval)
+                    sleep(1)
                 else:
                     start_pipeline(period.int_timestamp)
 
 
-task_loop(minute_interval=1)
+def wait(seconds):
+    for n in range(seconds, 0, -1):
+        logger.debug(f"{n}!")
+        sleep(1)
+    else:
+        logger.debug(f"go!")
+
+
+if __name__ == "__main__":
+    wait(10)
+    # TODO: Configuration.minute_interval
+    start_task_loop(minute_interval=1)

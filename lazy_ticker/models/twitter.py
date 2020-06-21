@@ -24,7 +24,7 @@ class TwitterSymbolsTable(TwitterModelBase):
     id = Column(Integer, index=True, primary_key=True)
     user_id = Column(BigInteger)
     tweet_id = Column(BigInteger)
-    published_time = Column(DateTime)  # Index ?
+    published_time = Column(DateTime, index=True)  # Index ?
     symbol = Column(String)
     valid = Column(Boolean, nullable=True)
 

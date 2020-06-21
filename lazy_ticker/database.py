@@ -3,6 +3,7 @@ from contextlib import contextmanager
 
 from lazy_ticker.models import InstrumentBaseModel, InstrumentsTable
 from lazy_ticker.models import TwitterModelBase, TwitterUsersTable, TwitterSymbolsTable
+from lazy_ticker.models import WatchListModelBase, WatchListTable
 
 from datetime import datetime, timedelta
 
@@ -18,6 +19,8 @@ from lazy_ticker.configuration import Configuration
 
 from loguru import logger
 
+import pendulum
+
 DATABASE_URI = Configuration.get_database_uri()
 
 
@@ -27,6 +30,7 @@ class LazyDB:
         engine = create_engine(DATABASE_URI)
         InstrumentBaseModel.metadata.create_all(engine)
         TwitterModelBase.metadata.create_all(engine)
+        WatchListModelBase.metadata.create_all(engine)
         return sessionmaker(bind=engine)
 
     @classmethod
@@ -74,7 +78,7 @@ class LazyDB:
             )
 
     @classmethod
-    def update_users_last_tweet(cls, name: str, last_tweet_id: int):
+    def update_users_last_tweet_column(cls, name: str, last_tweet_id: int):
         with cls.session_manager() as session:
             query = (
                 session.query(TwitterUsersTable)
@@ -112,9 +116,44 @@ class LazyDB:
                 exists = session.query(query.exists()).scalar()
                 if not exists:
                     logger.error(f"{tweet} does not exists in the database.")
+                    # NOTE: May need to raise an error here.
                     return False
             else:
                 return True
+
+    @classmethod
+    def update_tweet_validation_column(cls, valid_symbols: List[str]):
+        with cls.session_manager() as session:
+            for row in session.query(TwitterSymbolsTable).filter(
+                TwitterSymbolsTable.valid == None
+            ):
+                if row.symbol in valid_symbols:
+                    row.valid = True
+                else:
+                    row.valid = False
+                session.commit()
+
+    @classmethod
+    def delete_tweets_where_validation_column_is_false(cls):
+        with cls.session_manager() as session:
+            query = TwitterSymbolsTable.__table__.delete().where(
+                TwitterSymbolsTable.valid == False
+            )
+            session.execute(query)
+            session.commit()
+
+    @classmethod
+    def get_all_tweets_sorted_by_published_time(cls):
+        with cls.session_manager() as session:
+            return session.query(TwitterSymbolsTable).order_by("published_time").all()
+
+    @classmethod
+    def get_all_symbols_from_unchecked_tweets(cls):
+        with cls.session_manager() as session:
+            query = (
+                session.query(TwitterSymbolsTable).filter(TwitterSymbolsTable.valid == None).all()
+            )
+            return list(set([symbol.symbol for symbol in query]))
 
     @classmethod
     def add_instruments(cls, instruments: List[dict]):
@@ -134,97 +173,56 @@ class LazyDB:
             return [symbol.symbol for symbol in session.query(InstrumentsTable.symbol)]
 
     @classmethod
-    def get_uncheck_symbols_from_tweets(cls):
+    def add_to_watchlist(cls, tweets: List[TwitterSymbolsTable]):
         with cls.session_manager() as session:
-            query = (
-                session.query(TwitterSymbolsTable).filter(TwitterSymbolsTable.valid == None).all()
-            )
-            return list(set([symbol.symbol for symbol in query]))
+            for tweet in tweets:
 
-    @classmethod
-    def update_tweets(cls, valid_symbols):
-        with cls.session_manager() as session:
-            for row in session.query(TwitterSymbolsTable).filter(
-                TwitterSymbolsTable.valid == None
-            ):
-                if row.symbol in valid_symbols:
-                    row.valid = True
+                symbol = tweet.symbol
+                publish_time = tweet.published_time
+
+                query = (
+                    session.query(WatchListTable)
+                    .filter(WatchListTable.symbol == symbol)
+                    .one_or_none()
+                )
+
+                if query:
+                    if publish_time > query.time:
+                        query.time = publish_time
+                        session.commit()
+                    else:
+                        continue
                 else:
-                    row.valid = False
-                session.commit()
+                    row = WatchListTable(symbol=symbol, time=publish_time)
+                    session.add(row)
+                    session.commit()
 
     @classmethod
-    def delete_invalid_tweets(cls):
+    def get_watchlist_symbols_within_last_month(cls):
         with cls.session_manager() as session:
-            delete_query = TwitterSymbolsTable.__table__.delete().where(
-                TwitterSymbolsTable.valid == False
-            )
-            session.execute(delete_query)
-            session.commit()
+            filter_time = pendulum.now("UTC").subtract(months=1)
+            return session.query(WatchListTable).filter(WatchListTable.time > filter_time).all()
 
-    # @classmethod
-    # def tweet_id_exists(cls, tweet_id: int):  # should pass list of all ids
-    #     with cls.session_manager() as session:
-    #         return (
-    #             session.query(TwitterSymbolsTable)
-    #             .filter(TwitterSymbolsTable.tweet_id == tweet_id)
-    #             .scalar()
-    #         )
-    #
-    # @classmethod
-    # def query_tweets_by_date_added(cls, date_added: datetime):
-    #     with cls.connect() as Session:
-    #         session = Session()
-    #         return session.query(TwitterUsersTable).filter(TwitterUsersTable.name == name).first()
-    #
+    @classmethod
+    def get_watchlist_symbols_within_last_week(cls):
+        with cls.session_manager() as session:
+            filter_time = pendulum.now("UTC").subtract(weeks=1)
+            return session.query(WatchListTable).filter(WatchListTable.time > filter_time).all()
 
-    # @classmethod
-    # def add_symbols(cls, symbols: List[Instrument]) -> None:
-    #     with cls.connect(cls.DATABASE_URI) as Session:
-    #         session = Session()
-    #
-    #         for symbol in symbols:
-    #             instrument = models.Instruments(**symbol.dict())
-    #             try:
-    #                 session.add(instrument)
-    #                 session.commit()
-    #             except IntegrityError:
-    #                 session.rollback()
-    #                 query = (
-    #                     session.query(models.Instruments)
-    #                     .filter(models.Instruments.symbol == instrument.symbol)
-    #                     .update({"date": datetime.utcnow()})
-    #                 )
-    #                 session.commit()
-    #                 session.flush()
-    #
-    # @classmethod
-    # def get_symbols(cls):
-    #     with cls.connect(cls.DATABASE_URI) as Session:
-    #         session = Session()
-    #         query = session.query(models.Instruments)
-    #         instruments = [Instrument.from_orm(q) for q in query]
-    #     return instruments
-    #
-    # @classmethod
-    # @validate_arguments
-    # def get_symbols_since(cls, hours: Hours):
-    #     since = datetime.utcnow() - timedelta(hours=hours.value)
-    #     with cls.connect(cls.DATABASE_URI) as Session:
-    #         session = Session()
-    #         query = session.query(models.Instruments).filter(models.Instruments.date > since)
-    #         instruments = [Instrument.from_orm(q) for q in query]
-    #     return instruments
-    #
-    # @classmethod
-    # def get_most_recent(cls, amount: int):
-    #     with cls.connect(cls.DATABASE_URI) as Session:
-    #         session = Session()
-    #         query = (
-    #             session.query(models.Instruments)
-    #             .order_by(models.Instruments.date.desc())
-    #             .limit(amount)
-    #             .all()
-    #         )
-    #         instruments = [Instrument.from_orm(q) for q in query]
-    #     return instruments
+    @classmethod
+    def get_watchlist_symbols_within_last_day(cls):
+        with cls.session_manager() as session:
+            filter_time = pendulum.now("UTC").subtract(days=1)
+            return session.query(WatchListTable).filter(WatchListTable.time > filter_time).all()
+
+    @classmethod
+    def get_watchlist_symbols_within_last_hour(cls):
+        with cls.session_manager() as session:
+            filter_time = pendulum.now("UTC").subtract(hours=1)
+            return session.query(WatchListTable).filter(WatchListTable.time > filter_time).all()
+
+
+#
+# subjects_within_the_last_ten_weeks = session.query(Subject).filter(
+#     Subject.time > ten_weeks_ago).all()
+#
