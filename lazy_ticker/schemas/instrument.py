@@ -67,6 +67,13 @@ class InstrumentSchema(pydantic.BaseModel):
 class InstrumentsList(pydantic.BaseModel):
     instruments: List[InstrumentSchema]
 
+    def create_list_tickers(self):
+        tickers = []
+        for i in self.instruments:
+            tickers += i.get_tradingview_ticker()
+        else:
+            return tickers
+
 
 if __name__ == "__main__":  # TODO Dump for tests.
 

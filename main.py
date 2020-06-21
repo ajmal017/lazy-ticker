@@ -2,6 +2,8 @@
 from fastapi import FastAPI, Response, status
 from lazy_ticker.database import LazyDB
 from lazy_ticker.twitter_scraper import scrape_user_id
+from lazy_ticker.schemas import InstrumentsList
+from enum import Enum
 
 app = FastAPI()
 
@@ -43,3 +45,23 @@ async def get_user(username: str):
         return {"message": query}
     else:
         return {"message": f"{username} doesn't exist."}
+
+
+class TimeFrame(str, Enum):
+    MONTH = "MONTH"
+    WEEK = "WEEK"
+    DAY = "DAY"
+    HOUR = "HOUR"
+
+
+@app.get("/watchlist/{timeframe}")
+async def get_watchlist(timeframe: TimeFrame):
+    if timeframe == TimeFrame.MONTH:
+        inst = LazyDB.get_watchlist_symbols_within_last_month()
+    elif timeframe == TimeFrame.WEEK:
+        inst = LazyDB.get_watchlist_symbols_within_last_week()
+    elif timeframe == TimeFrame.DAY:
+        inst = LazyDB.get_watchlist_symbols_within_last_day()
+    elif timeframe == TimeFrame.HOUR:
+        inst = LazyDB.get_watchlist_symbols_within_last_hour()
+    return InstrumentsList(instruments=inst).create_list_tickers()

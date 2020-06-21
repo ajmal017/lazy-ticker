@@ -201,28 +201,66 @@ class LazyDB:
     def get_watchlist_symbols_within_last_month(cls):
         with cls.session_manager() as session:
             filter_time = pendulum.now("UTC").subtract(months=1)
-            return session.query(WatchListTable).filter(WatchListTable.time > filter_time).all()
+
+            query = session.query(WatchListTable).filter(WatchListTable.time > filter_time).all()
+
+            instruments = []
+            for symbol in query:
+                current = (
+                    session.query(InstrumentsTable)
+                    .filter(InstrumentsTable.symbol == symbol.symbol)
+                    .one_or_none()
+                )
+                instruments.append(current)
+            return instruments
 
     @classmethod
     def get_watchlist_symbols_within_last_week(cls):
         with cls.session_manager() as session:
             filter_time = pendulum.now("UTC").subtract(weeks=1)
-            return session.query(WatchListTable).filter(WatchListTable.time > filter_time).all()
+
+            query = session.query(WatchListTable).filter(WatchListTable.time > filter_time).all()
+
+            instruments = []
+            for symbol in query:
+                current = (
+                    session.query(InstrumentsTable)
+                    .filter(InstrumentsTable.symbol == symbol.symbol)
+                    .one_or_none()
+                )
+                instruments.append(current)
+            return instruments
 
     @classmethod
     def get_watchlist_symbols_within_last_day(cls):
         with cls.session_manager() as session:
             filter_time = pendulum.now("UTC").subtract(days=1)
-            return session.query(WatchListTable).filter(WatchListTable.time > filter_time).all()
+
+            query = session.query(WatchListTable).filter(WatchListTable.time > filter_time).all()
+
+            instruments = []
+            for symbol in query:
+                current = (
+                    session.query(InstrumentsTable)
+                    .filter(InstrumentsTable.symbol == symbol.symbol)
+                    .one_or_none()
+                )
+                instruments.append(current)
+            return instruments
 
     @classmethod
     def get_watchlist_symbols_within_last_hour(cls):
         with cls.session_manager() as session:
             filter_time = pendulum.now("UTC").subtract(hours=1)
-            return session.query(WatchListTable).filter(WatchListTable.time > filter_time).all()
 
+            query = session.query(WatchListTable).filter(WatchListTable.time > filter_time).all()
 
-#
-# subjects_within_the_last_ten_weeks = session.query(Subject).filter(
-#     Subject.time > ten_weeks_ago).all()
-#
+            instruments = []
+            for symbol in query:
+                current = (
+                    session.query(InstrumentsTable)
+                    .filter(InstrumentsTable.symbol == symbol.symbol)
+                    .one_or_none()
+                )
+                instruments.append(current)
+            return instruments
