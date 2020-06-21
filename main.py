@@ -1,5 +1,6 @@
 # from lazy_ticker import core  # used for testing paths
 from fastapi import FastAPI, Response, status
+from fastapi.responses import FileResponse
 from lazy_ticker.database import LazyDB
 from lazy_ticker.twitter_scraper import scrape_user_id
 from lazy_ticker.schemas import InstrumentsList
@@ -54,14 +55,28 @@ class TimeFrame(str, Enum):
     HOUR = "HOUR"
 
 
+def generate_file_response(query: InstrumentsList, filename: str):
+    temp_file = "/tmp/temp.txt"  # UUID, caching withn x time
+    with open(temp_file, mode="w") as write_file:
+        query = ",".join([str(q) for q in query])
+        write_file.write(query)
+
+    return FileResponse(temp_file, filename=filename)
+
+
 @app.get("/watchlist/{timeframe}")
 async def get_watchlist(timeframe: TimeFrame):
     if timeframe == TimeFrame.MONTH:
-        inst = LazyDB.get_watchlist_symbols_within_last_month()
+        watchlist = LazyDB.get_watchlist_symbols_within_last_month()
     elif timeframe == TimeFrame.WEEK:
-        inst = LazyDB.get_watchlist_symbols_within_last_week()
+        watchlist = LazyDB.get_watchlist_symbols_within_last_week()
     elif timeframe == TimeFrame.DAY:
-        inst = LazyDB.get_watchlist_symbols_within_last_day()
+        watchlist = LazyDB.get_watchlist_symbols_within_last_day()
     elif timeframe == TimeFrame.HOUR:
-        inst = LazyDB.get_watchlist_symbols_within_last_hour()
-    return InstrumentsList(instruments=inst).create_list_tickers()
+        watchlist = LazyDB.get_watchlist_symbols_within_last_hour()
+
+    if watchlist:
+        l = InstrumentsList(instruments=watchlist).create_list_tickers()
+        return generate_file_response(l, f"{timeframe}.txt")
+    else:
+        return "X"
