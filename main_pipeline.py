@@ -23,7 +23,7 @@ def divide_chunks(container, size):
         yield container[position : position + size]
 
 
-# TODO: heavy refactoring
+# TODO: heavy refactoring needed
 def prepare_for_watchlist():
     logger.debug("prepare_for_watchlist starts")
     valid_instruments = LazyDB.get_instruments()
@@ -44,13 +44,14 @@ def prepare_for_watchlist():
     LazyDB.delete_invalid_tweets()
 
 
-def restore_usertable_from_previous_states():
+def restore_users_table_from_previous_data():
     # TODO: add config flag
     if DATA_DIRECTORY.exists():
         users = list(set(path.stem for path in DATA_DIRECTORY.glob("**/*.json")))
+
         for user in users:
             logger.debug(f"restoring {user} from previous state.")
-            # TODO you can animate this
+            # TODO you can animate this with progressbar.
             resp = requests.post(f"http://backend/user/{user}")
             assert resp.status_code == 201
 
@@ -62,12 +63,14 @@ def start_pipeline(timestamp):
     logger.debug("processing job", timestamp, dt, dt.timezone_name)
     logger.debug(f"data/{date}/users/{timestamp}.json")
 
-    # TODO: Add workers to config | TODO: dive into luigi config
     users = LazyDB.get_all_users()
 
     if not users:
-        restore_usertable_from_previous_states()
+        logger.info("User table is empty.")
+        logger.info("Attempting to restore users from previous data")
+        restore_users_table_from_previous_data()
 
+    # TODO: Add workers to config | TODO: dive into luigi config
     twitter_scrape_successful = luigi.build(
         [TwitterScraperPipline(timestamp=timestamp, users=users)], workers=3, local_scheduler=False
     )

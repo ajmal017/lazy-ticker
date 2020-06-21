@@ -1,5 +1,6 @@
 import luigi
 from luigi import LocalTarget, Task, WrapperTask
+from luigi import Parameter, IntParameter
 import pydantic
 from lazy_ticker.paths import DATA_DIRECTORY
 from lazy_ticker.schemas import TwitterSymbolList
@@ -45,7 +46,7 @@ def concatenate_targetpath(input_target: LocalTarget, path: str) -> LocalTarget:
 
 
 class MakeDateDirectory(Task):
-    timestamp = luigi.IntParameter()
+    timestamp = IntParameter()
 
     def output(self):
         date_processed = pendulum.from_timestamp(self.timestamp, tz="UTC").date()
@@ -57,7 +58,7 @@ class MakeDateDirectory(Task):
 
 
 class MakeTweetsDirectory(Task):
-    timestamp = luigi.IntParameter()
+    timestamp = IntParameter()
 
     def requires(self):
         return MakeDateDirectory(self.timestamp)
@@ -70,7 +71,7 @@ class MakeTweetsDirectory(Task):
 
 
 class MakeTimeStampDirectory(Task):
-    timestamp = luigi.IntParameter()
+    timestamp = IntParameter()
 
     def requires(self):
         return MakeTweetsDirectory(self.timestamp)
@@ -84,8 +85,8 @@ class MakeTimeStampDirectory(Task):
 
 
 class ScrapeUsersTweets(Task):
-    timestamp = luigi.IntParameter()
-    user = luigi.Parameter()
+    timestamp = IntParameter()
+    user = Parameter()
 
     def requires(self):
         return MakeTimeStampDirectory(self.timestamp)
@@ -111,8 +112,8 @@ class ScrapeUsersTweets(Task):
 
 
 class InsertTweetsInToDatabase(Task):
-    timestamp = luigi.IntParameter()
-    user = luigi.Parameter()
+    timestamp = IntParameter()
+    user = Parameter()
 
     def requires(self):
         return ScrapeUsersTweets(timestamp=self.timestamp, user=self.user)
@@ -122,14 +123,14 @@ class InsertTweetsInToDatabase(Task):
         logger.debug(f"{self.user} | checking if complete.")
         if input_path.exists():
             with open(input_path, mode="r") as read_file:
-                tweets = json.load(read_file)["tweets"]
+                tweets = TwitterSymbolList.parse_raw(read_file.read()).tweets
 
             if len(tweets) < 1:
                 return True
 
             if LazyDB.check_all_tweets_exists(tweets):
-                tweet_id = tweets[0]["tweet_id"]
-                LazyDB.update_users_last_tweet(name=self.user.name, last_tweet_id=tweet_id)
+                last_tweet_id = tweets[0].tweet_id
+                LazyDB.update_users_last_tweet(name=self.user.name, last_tweet_id=last_tweet_id)
                 return True
 
         return False
@@ -138,16 +139,17 @@ class InsertTweetsInToDatabase(Task):
         input_path = convert_to_path(self.input())
 
         with open(input_path, mode="r") as read_file:
-            tweets = json.load(read_file)["tweets"]
+            tweets = TwitterSymbolList.parse_raw(read_file.read()).tweets
 
+        tweets = [tweet.dict() for tweet in tweets]
         logger.info(f"Found {len(tweets)} new tickers from @{self.user.name}.")
 
         LazyDB.add_tweets(tweets)
 
 
 class TwitterScraperPipline(WrapperTask):
-    timestamp = luigi.IntParameter()
-    users = luigi.Parameter()
+    timestamp = IntParameter()
+    users = Parameter()
 
     def requires(self):
         return [
