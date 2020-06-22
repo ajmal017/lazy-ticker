@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+
+{% block add_user %}
+<div class="ui message">
+    <div class="ui fluid massive icon input">
+        <input type="text" name="add_user" placeholder="Add User">
+        <button class="ui massive button">ADD</button>
+    </div>
+</div>
+{% endblock %}
+
+{% block trading_view %}
+<div class="ui message">
+    <!-- TradingView Widget BEGIN -->
+    <div class="tradingview-widget-container">
+        <div class="tradingview-widget-container__widget"></div>
+        <div class="tradingview-widget-copyright"><a href="https://www.tradingview.com/symbols/{{instrument.symbol}}/" rel="noopener" target="_blank"><span class="blue-text">{{instrument.symbol}} Symbol Info</span></a> by TradingView</div>
+        <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-symbol-info.js" async>
+            {
+                "symbol": "{{tradingview}}",
+                "width": "100%",
+                "locale": "en",
+                "colorTheme": "light",
+                "isTransparent": true
+            }
+        </script>
+    </div>
+</div>
+<!-- TradingView Widget END -->
+
+{% endblock %}
+
+
+
+{% block watchlist %}
+<div class="ui top attached tabular menu">
+
+    {% for time in time_periods %}
+
+    {% if time.value == current_period.value %}
+
+    <a class="item active" href="{{ time.value }}">
+        {{ time.value }}
+    </a>
+    {% else %}
+
+    <a class="item" href="{{ time.value }}">
+        {{ time.value }}
+    </a>
+    {% endif %}
+    {% endfor %}
+</div>
+
+
+<div class="ui bottom attached segment">
+    <table class="attached ui celled selectable table">
+        <!-- <table class="ui celled table"> -->
+        <thead>
+            <tr>
+                <th>Symbol</th>
+                <th>Exchange</th>
+                <th>Description</th>
+            </tr>
+        </thead>
+
+        {% for instrument in watchlist["instruments"] %}
+
+        <tbody>
+            <tr>
+
+                <td data-label="Symbol">
+                    {{ instrument.symbol }}
+                </td>
+
+                <td data-label="Exchange">
+                    {{ instrument.exchange }}
+                </td>
+
+                <td data-label="Description">
+                    {{ instrument.description.title() }}
+                </td>
+            </tr>
+        </tbody>
+
+        {% endfor %}
+    </table>
+
+</div>
+
+{% endblock %}
+
+
+<!-- <div class="ui main text container">
+    <h1 class="ui header">Semantic UI Fixed Template</h1>
+    <p>This is a basic fixed menu template using fixed size containers.</p>
+    <p>A text container is used for the main container, which is useful for single column layouts</p>
+</div> -->

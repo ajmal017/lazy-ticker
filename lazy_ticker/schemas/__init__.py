@@ -5,6 +5,7 @@ from lazy_ticker.schemas.twitter import (
     TwitterSymbolList,
     TweetSchema,
 )
+from lazy_ticker.schemas.timeperiod import TimePeriod
 
 __all__ = [
     "InstrumentSchema",
@@ -13,4 +14,5 @@ __all__ = [
     "TwitterSymbolSchema",
     "TwitterSymbolList",
     "TweetSchema",
+    "TimePeriod",
 ]

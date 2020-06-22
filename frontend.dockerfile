@@ -9,7 +9,9 @@ RUN poetry config virtualenvs.create false
 RUN cd /tmp/install/ && poetry install --no-root
 
 COPY lazy_ticker /app/lazy_ticker
-COPY backend.py /app/backend.py
+COPY static /app/static
+COPY templates /app/templates
 
-ENV MODULE_NAME=backend
-EXPOSE 5001
+COPY frontend.py /app/frontend.py
+
+ENV MODULE_NAME=frontend

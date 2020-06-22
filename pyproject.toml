@@ -22,6 +22,7 @@ twitter-scraper = {git = "https://github.com/bisguzar/twitter-scraper"}
 pendulum = "^2.1.0"
 loguru = "^0.5.1"
 notifiers = "^1.2.1"
+jinja2 = "^2.11.2"
 
 [tool.poetry.dev-dependencies]
 black = "^19.10b0"

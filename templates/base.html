@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+
+    <head>
+        <meta charset="utf-8">
+        <title>LAZY TICKER</title>
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/semantic-ui@2.4.2/dist/semantic.min.css">
+        <script src="https://cdn.jsdelivr.net/npm/semantic-ui@2.4.2/dist/semantic.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/vue@2.6.11"></script>
+        <link rel="stylesheet" href={{
+            url_for("static", path="/css/master.css")
+        }}>
+        <script src="https://code.jquery.com/jquery-3.1.1.min.js" integrity="sha256-hVVnYaiADRTO2PzUGmuLJr8BLUSjGIZsDYGmIJLv2b8=" crossorigin="anonymous"></script>
+
+    </head>
+
+    <body>
+        <div class="ui raised padded text container segment">
+            <div class="ui four column grid">
+                <div class="container">
+                    <div class="ui raised padded text container segment">
+                        <h1 class="ui header">Lazy Ticker</h1>
+                    </div>
+                </div>
+
+                </br>
+                <div class="container">
+                    <div class="ui raised padded text container segment">
+                        <h3 class="ui header">Add twitter user to database</h3>
+                        {% block add_user %}
+                        {% endblock%}
+                    </div>
+                </div>
+                </br>
+
+                <div class="container">
+                    <div class="ui raised padded text container segment">
+                        <h3 class="ui header">Latest unique ticker</h3>
+                        {% block trading_view %}
+                        {% endblock%}
+                    </div>
+                </div>
+                </br>
+
+                <div class="container">
+
+                    <div class="ui right raised padded text container segment">
+
+                        <h3 class="ui header">Watchlist
+
+                            <a class="ui download primary button">Download</a>
+
+                        </h3>
+                        Ticker symbols found with in the last {{ current_period.value.replace("s", "")}}.
+                        {% block watchlist %}
+                        {% endblock%}
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+    </body>
+
+
+
+</html>
