@@ -51,7 +51,7 @@ def restore_users_table_state_from_previous_data():
 
         for user in users:
             logger.debug(f"restoring {user} from previous state.")
-            resp = requests.post(f"http://backend/user/{user}")
+            resp = requests.post(f"http://backend:5001/user/{user}")
             assert resp.status_code == 201
 
 

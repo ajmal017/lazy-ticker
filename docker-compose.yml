@@ -2,10 +2,11 @@
 version: '3.1'
 
 services:
-    backend:
+
+    frontend:
         build:
             context: .
-            dockerfile: backend.dockerfile
+            dockerfile: frontend.dockerfile
         restart: always
         ports:
             - 80:80
@@ -19,8 +20,26 @@ services:
             DATABASE_USER: lazyuser
             DATABASE_PASSWORD: lazysecret
         depends_on:
+            - backend
+        entrypoint: ["/start-reload.sh"]
+
+    backend:
+        build:
+            context: .
+            dockerfile: backend.dockerfile
+        restart: always
+        volumes:
+            - .:/app
+        networks:
+            - lazy_network
+        environment:
+            DATABASE_IP: lazydb
+            DATABASE_PORT: 5432
+            DATABASE_USER: lazyuser
+            DATABASE_PASSWORD: lazysecret
+            PORT: 5001
+        depends_on:
             - lazydb
-        # entrypoint: ["/start-reload.sh"]
 
     lazydb:
         image: postgres:9.6

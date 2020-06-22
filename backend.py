@@ -1,12 +1,9 @@
 # from lazy_ticker import core  # used for testing paths
-from fastapi import FastAPI, Response, status
+from fastapi import FastAPI, Request, Response, Path, status
 from fastapi.responses import FileResponse
 from lazy_ticker.database import LazyDB
 from lazy_ticker.twitter_scraper import scrape_user_id
-from lazy_ticker.schemas import InstrumentsList
-from typing import Dict
-from enum import Enum
-import uuid
+from lazy_ticker.schemas import InstrumentsList, TimePeriod
 
 app = FastAPI()
 
@@ -20,10 +17,14 @@ async def get_all_users():
         return {"message": None}
 
 
+def clean_username(username: str) -> str:
+    return username.replace("@", "")
+
+
 # TODO added cache for same request
 @app.post("/user/{username}", status_code=201)
-async def add_user(username: str, response: Response):
-    # TODO: parse @ symbols. Maybe use regex
+async def add_user(response: Response, username: str = Path(..., regex="^[a-zA-Z0-9\_\@]+$")):
+    username = clean_username(username)
     user_id = scrape_user_id(username)
     if user_id:
         LazyDB.add_user(name=username, user_id=user_id)
@@ -38,7 +39,8 @@ async def add_user(username: str, response: Response):
 # of a pipeline cycle.
 # IDEA: also removes all tweets with user_id
 @app.delete("/user/{username}")
-async def remove_user(username: str):
+async def remove_user(username: str = Path(..., regex="^[a-zA-Z0-9\_\@]+$")):
+    username = clean_username(username)
     if LazyDB.remove_user(name=username):
         return {"message": f"{username} removed"}
     else:
@@ -46,44 +48,13 @@ async def remove_user(username: str):
 
 
 @app.get("/user/{username}")
-async def get_user(username: str):
+async def get_user(username: str = Path(..., regex="^[a-zA-Z0-9\_\@]+$")):
+    username = clean_username(username)
     query = LazyDB.get_user(name=username)
     if query:
         return {"message": query}
     else:
         return {"message": f"{username} doesn't exist."}
-
-
-class TimePeriod(str, Enum):
-    MONTHS = "months"
-    WEEKS = "weeks"
-    DAYS = "days"
-    HOURS = "hours"
-
-    # IDEA: May add the ability to query by amount using amount kwarg.
-
-    def convert_to_period(self, amount: int = 1) -> Dict[str, int]:
-        return {self.value: amount}
-
-
-def generate_file_response(query: InstrumentsList, filename: str):
-    random_id = uuid.uuid4().hex
-    temp_file = f"/tmp/{random_id}.txt"  # UUID, caching withn x time
-    with open(temp_file, mode="w") as write_file:
-        query = ",".join([str(q) for q in query])
-        write_file.write(query)
-    filename = f"last_{filename}_watchlist"
-
-    return FileResponse(temp_file, filename=filename)
-
-
-@app.get("/watchlist/{time_period}/download")
-async def download_watchlist(time_period: TimePeriod):
-    period = time_period.convert_to_period()
-    watchlist = LazyDB.get_watchlist_symbols_within_time_period(period)
-    response_list = InstrumentsList(instruments=watchlist).create_list_tickers()
-
-    return generate_file_response(response_list, time_period.value)
 
 
 @app.get("/watchlist/{time_period}")
