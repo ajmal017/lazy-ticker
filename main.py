@@ -4,7 +4,9 @@ from fastapi.responses import FileResponse
 from lazy_ticker.database import LazyDB
 from lazy_ticker.twitter_scraper import scrape_user_id
 from lazy_ticker.schemas import InstrumentsList
+from typing import Dict
 from enum import Enum
+import uuid
 
 app = FastAPI()
 
@@ -52,37 +54,51 @@ async def get_user(username: str):
         return {"message": f"{username} doesn't exist."}
 
 
-class TimeFrame(str, Enum):
-    MONTH = "MONTH"
-    WEEK = "WEEK"
-    DAY = "DAY"
-    HOUR = "HOUR"
+class TimePeriod(str, Enum):
+    MONTHS = "months"
+    WEEKS = "weeks"
+    DAYS = "days"
+    HOURS = "hours"
+
+    # IDEA: May add the ability to query by amount using amount kwarg.
+
+    def convert_to_period(self, amount: int = 1) -> Dict[str, int]:
+        return {self.value: amount}
 
 
 def generate_file_response(query: InstrumentsList, filename: str):
-    temp_file = "/tmp/temp.txt"  # UUID, caching withn x time
+    random_id = uuid.uuid4().hex
+    temp_file = f"/tmp/{random_id}.txt"  # UUID, caching withn x time
     with open(temp_file, mode="w") as write_file:
         query = ",".join([str(q) for q in query])
         write_file.write(query)
+    filename = f"last_{filename}_watchlist"
 
     return FileResponse(temp_file, filename=filename)
 
 
-@app.get("/watchlist/{timeframe}")
-async def get_watchlist(timeframe: TimeFrame):
-    if timeframe == TimeFrame.MONTH:
-        watchlist = LazyDB.get_watchlist_symbols_within_last_month()
-    elif timeframe == TimeFrame.WEEK:
-        watchlist = LazyDB.get_watchlist_symbols_within_last_week()
-    elif timeframe == TimeFrame.DAY:
-        watchlist = LazyDB.get_watchlist_symbols_within_last_day()
-    elif timeframe == TimeFrame.HOUR:
-        watchlist = LazyDB.get_watchlist_symbols_within_last_hour()
+@app.get("/watchlist/{time_period}/download")
+async def download_watchlist(time_period: TimePeriod):
+    period = time_period.convert_to_period()
+    watchlist = LazyDB.get_watchlist_symbols_within_time_period(period)
+    response_list = InstrumentsList(instruments=watchlist).create_list_tickers()
 
-    print(watchlist)
+    return generate_file_response(response_list, time_period.value)
 
-    if watchlist:
-        l = InstrumentsList(instruments=watchlist).create_list_tickers()
-        return generate_file_response(l, f"{timeframe}.txt")
-    else:
-        return "X"
+
+@app.get("/watchlist/{time_period}")
+async def get_watchlist(time_period: TimePeriod):
+    period = time_period.convert_to_period()
+    watchlist = LazyDB.get_watchlist_symbols_within_time_period(period)
+
+    return InstrumentsList(instruments=watchlist)
+
+
+@app.get("/recent/tweet")
+async def get_latest_tweet():
+    return LazyDB.get_most_recently_tweeted_symbol()
+
+
+@app.get("/recent/ticker")
+async def get_latest_ticker():
+    return LazyDB.get_most_recent_unique_ticker()

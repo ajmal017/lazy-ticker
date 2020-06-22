@@ -197,15 +197,17 @@ class LazyDB:
                     session.add(row)
                     session.commit()
 
-    # TODO: SHOULD BE ONE FUNCTION
-    # TODO: sort by time latest at top
-    # TODO: # should take timeframe as arg
     @classmethod
-    def get_watchlist_symbols_within_last_month(cls):
+    def get_watchlist_symbols_within_time_period(cls, time_period: dict):
         with cls.session_manager() as session:
-            filter_time = pendulum.now("UTC").subtract(months=1)
+            filter_period = pendulum.now("UTC").subtract(**time_period)
 
-            query = session.query(WatchListTable).filter(WatchListTable.time > filter_time).all()
+            query = (
+                session.query(WatchListTable)
+                .filter(WatchListTable.time > filter_period)
+                .order_by(WatchListTable.time.desc())
+                .all()
+            )
 
             instruments = []
             for symbol in query:
@@ -214,56 +216,21 @@ class LazyDB:
                     .filter(InstrumentsTable.symbol == symbol.symbol)
                     .one_or_none()
                 )
-                instruments.append(current)
+                if current:
+                    instruments.append(current)
+
             return instruments
 
     @classmethod
-    def get_watchlist_symbols_within_last_week(cls):
+    def get_most_recently_tweeted_symbol(cls):
         with cls.session_manager() as session:
-            filter_time = pendulum.now("UTC").subtract(weeks=1)
-
-            query = session.query(WatchListTable).filter(WatchListTable.time > filter_time).all()
-
-            instruments = []
-            for symbol in query:
-                current = (
-                    session.query(InstrumentsTable)
-                    .filter(InstrumentsTable.symbol == symbol.symbol)
-                    .one_or_none()
-                )
-                instruments.append(current)
-            return instruments
+            return (
+                session.query(TwitterSymbolsTable)
+                .order_by(TwitterSymbolsTable.published_time.desc())
+                .first()
+            )
 
     @classmethod
-    def get_watchlist_symbols_within_last_day(cls):
+    def get_most_recent_unique_ticker(cls):
         with cls.session_manager() as session:
-            filter_time = pendulum.now("UTC").subtract(days=1)
-
-            query = session.query(WatchListTable).filter(WatchListTable.time > filter_time).all()
-
-            instruments = []
-            for symbol in query:
-                current = (
-                    session.query(InstrumentsTable)
-                    .filter(InstrumentsTable.symbol == symbol.symbol)
-                    .one_or_none()
-                )
-                instruments.append(current)
-            return instruments
-
-    @classmethod
-    def get_watchlist_symbols_within_last_hour(cls):
-        with cls.session_manager() as session:
-            filter_time = pendulum.now("UTC").subtract(hours=1)
-
-            query = session.query(WatchListTable).filter(WatchListTable.time > filter_time).all()
-
-            instruments = []
-            for symbol in query:
-                current = (
-                    session.query(InstrumentsTable)
-                    .filter(InstrumentsTable.symbol == symbol.symbol)
-                    .one_or_none()
-                )
-                instruments.append(current)
-            return instruments
+            return session.query(InstrumentsTable).order_by(InstrumentsTable.date.desc()).first()

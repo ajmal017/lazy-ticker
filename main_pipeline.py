@@ -129,5 +129,5 @@ def wait(seconds):
 
 if __name__ == "__main__":
     wait(10)
-    # TODO: Configuration.minute_interval
+    # TODO: Configuration.task_execution_interval
     start_task_loop(minute_interval=1)
