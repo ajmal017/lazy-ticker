@@ -91,8 +91,10 @@ async def download_watchlist(time_period: TimePeriod):
     watchlist = backend_api.get_watchlist(time_period.value)
     instruments = watchlist.json()["instruments"]
     response_list = InstrumentsList(instruments=instruments).create_list_tickers()
-
-    return generate_file_response(response_list, time_period.value)
+    if response_list:
+        return generate_file_response(response_list, time_period.value)
+    else:
+        return generate_file_response(["EMPTY"], time_period.value)
 
 
 def clean_username(username: str) -> str:
