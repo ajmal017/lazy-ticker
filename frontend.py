@@ -3,9 +3,10 @@ from fastapi import FastAPI, Request, Response, Path, status
 from fastapi.responses import FileResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
-from lazy_ticker.schemas import InstrumentSchema, TimePeriod
+from lazy_ticker.schemas import InstrumentSchema, InstrumentsList, TimePeriod
 
 from uplink import Consumer, get, Path
+import uuid
 
 
 class API(Consumer):
@@ -31,10 +32,10 @@ templates = Jinja2Templates(directory="templates")
 
 
 @app.get("/")
-async def index(request: Request, timeperiod: TimePeriod = TimePeriod.MONTHS):
-    return RedirectResponse(f"/watchlist/{timeperiod.value}")
+async def index(request: Request, time_period: TimePeriod = TimePeriod.MONTHS):
+    return RedirectResponse(f"/watchlist/{time_period.value}")
 
-    # watchlist = backend_api.get_watchlist(timeperiod.value)
+    # watchlist = backend_api.get_watchlist(time_period.value)
     # recent_ticker = backend_api.get_latest_ticker()
     #
     # instrument = InstrumentSchema(**recent_ticker.json())
@@ -46,16 +47,16 @@ async def index(request: Request, timeperiod: TimePeriod = TimePeriod.MONTHS):
     #         "request": request,
     #         "watchlist": watchlist.json(),
     #         "time_periods": TimePeriod,
-    #         "current_period": timeperiod,
+    #         "current_period": time_period,
     #         "recent_instrument": instrument,
     #         "tradingview": tradingview,
     #     },
     # )
 
 
-@app.get("/watchlist/{timeperiod}")
-async def index(request: Request, timeperiod: TimePeriod = TimePeriod.MONTHS):
-    watchlist = backend_api.get_watchlist(timeperiod.value)
+@app.get("/watchlist/{time_period}")
+async def index(request: Request, time_period: TimePeriod = TimePeriod.MONTHS):
+    watchlist = backend_api.get_watchlist(time_period.value)
     recent_ticker = backend_api.get_latest_ticker()
 
     instrument = InstrumentSchema(**recent_ticker.json())
@@ -67,14 +68,31 @@ async def index(request: Request, timeperiod: TimePeriod = TimePeriod.MONTHS):
             "request": request,
             "watchlist": watchlist.json(),
             "time_periods": TimePeriod,
-            "current_period": timeperiod,
+            "current_period": time_period,
             "instrument": instrument,
             "tradingview": tradingview,
         },
     )
 
 
-# @app.post("/")
+def generate_file_response(query: InstrumentsList, filename: str):
+    random_id = uuid.uuid4().hex
+    temp_file = f"/tmp/{random_id}.txt"  # UUID, caching withn x time
+    with open(temp_file, mode="w") as write_file:
+        query = ",".join([str(q) for q in query])
+        write_file.write(query)
+    filename = f"last_{filename}_watchlist"
+
+    return FileResponse(temp_file, filename=filename)
+
+
+@app.get("/watchlist/{time_period}/download")
+async def download_watchlist(time_period: TimePeriod):
+    watchlist = backend_api.get_watchlist(time_period.value)
+    instruments = watchlist.json()["instruments"]
+    response_list = InstrumentsList(instruments=instruments).create_list_tickers()
+
+    return generate_file_response(response_list, time_period.value)
 
 
 def clean_username(username: str) -> str:

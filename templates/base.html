@@ -5,12 +5,11 @@
         <meta charset="utf-8">
         <title>LAZY TICKER</title>
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/semantic-ui@2.4.2/dist/semantic.min.css">
+        <script src="https://code.jquery.com/jquery-3.1.1.min.js" integrity="sha256-hVVnYaiADRTO2PzUGmuLJr8BLUSjGIZsDYGmIJLv2b8=" crossorigin="anonymous"></script>
         <script src="https://cdn.jsdelivr.net/npm/semantic-ui@2.4.2/dist/semantic.min.js"></script>
-        <script src="https://cdn.jsdelivr.net/npm/vue@2.6.11"></script>
         <link rel="stylesheet" href={{
             url_for("static", path="/css/master.css")
         }}>
-        <script src="https://code.jquery.com/jquery-3.1.1.min.js" integrity="sha256-hVVnYaiADRTO2PzUGmuLJr8BLUSjGIZsDYGmIJLv2b8=" crossorigin="anonymous"></script>
 
     </head>
 
@@ -24,14 +23,14 @@
                 </div>
 
                 </br>
-                <div class="container">
+                <!-- <div class="container">
                     <div class="ui raised padded text container segment">
                         <h3 class="ui header">Add twitter user to database</h3>
                         {% block add_user %}
                         {% endblock%}
                     </div>
                 </div>
-                </br>
+                </br> -->
 
                 <div class="container">
                     <div class="ui raised padded text container segment">
@@ -46,12 +45,14 @@
 
                     <div class="ui right raised padded text container segment">
 
+                        <form class="" action="/watchlist/{{current_period.value}}/download" method="get">
+                            <button class="ui download primary button" id="download_button">Download {{current_period.value.replace("s", "").title()}} Watchlist </button>
+                        </form>
                         <h3 class="ui header">Watchlist
 
-                            <a class="ui download primary button">Download</a>
 
                         </h3>
-                        Ticker symbols found with in the last {{ current_period.value.replace("s", "")}}.
+                        Ticker symbols found looking back one {{ current_period.value.replace("s", "")}} before the current time.
                         {% block watchlist %}
                         {% endblock%}
                     </div>
@@ -62,6 +63,26 @@
 
     </body>
 
+    <script type="text/javascript">
+        $(document).ready(function() {
+            $(add_user_button).click(
+                function() {
+                    alert($(add_user_input));
+                }
+            );
+        });
+        //
+        // $(document).ready(function() {
+        //     $(download_button).click(
+        //         function() {
+        //             $.get("/watchlist/months/download", function(data, status) {
+        //                 console.log(data)
+        //
+        //             })
+        //         }
+        //     );
+        // });
+    </script>
 
 
 </html>
