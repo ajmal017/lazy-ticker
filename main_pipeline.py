@@ -100,8 +100,6 @@ def start_pipeline(timestamp):
 
 def start_task_loop(*, minute_interval: int):
 
-    logger.debug(f"sleeping for 10 seconds.")
-
     while True:
         now = pendulum.now("UTC")
         start = now.subtract(minutes=now.minute, seconds=now.second, microseconds=now.microsecond)
@@ -123,6 +121,7 @@ def start_task_loop(*, minute_interval: int):
 
 
 def wait(seconds):
+    logger.debug(f"sleeping for {seconds} seconds.")
     for n in range(seconds, 0, -1):
         logger.debug(f"{n}!")
         sleep(1)
@@ -133,4 +132,4 @@ def wait(seconds):
 if __name__ == "__main__":
     wait(10)
     # TODO: Configuration.task_execution_interval
-    start_task_loop(minute_interval=1)
+    start_task_loop(minute_interval=5)
