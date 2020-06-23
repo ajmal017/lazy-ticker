@@ -89,7 +89,7 @@ def generate_file_response(query: InstrumentsList, filename: str, inverted: bool
     random_id = uuid.uuid4().hex
     temp_file = f"/tmp/{random_id}.txt"
     with open(temp_file, mode="w") as write_file:
-        query = ",".join([str(q) for q in query])
+        query = ",".join([str(q) for q in query[:1000]])  # NOTE: Tradingview only allows 1000.
         write_file.write(query)
     if inverted:
         filename = f"last_{filename}_inverted_watchlist.txt"
