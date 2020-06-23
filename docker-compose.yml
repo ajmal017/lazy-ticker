@@ -12,16 +12,10 @@ services:
             - 80:80
         networks:
             - lazy_network
-        volumes:
-            - .:/app
         environment:
-            DATABASE_IP: lazydb
-            DATABASE_PORT: 5432
-            DATABASE_USER: lazyuser
-            DATABASE_PASSWORD: lazysecret
+            WORKERS_PER_CORE: 0.5
         depends_on:
             - backend
-        entrypoint: ["/start-reload.sh"]
 
     backend:
         build:
@@ -37,6 +31,7 @@ services:
             DATABASE_PORT: 5432
             DATABASE_USER: lazyuser
             DATABASE_PASSWORD: lazysecret
+            WORKERS_PER_CORE: 0.5
             PORT: 5001
         depends_on:
             - lazydb
@@ -63,7 +58,7 @@ services:
             - lazy_network
         volumes:
             - ./luigi_daemon.cfg:/etc/luigi/luigi.cfg:ro
-        environment:
+        environment: #NOTE: Does the daemon need these credentials?
             DATABASE_IP: lazydb
             DATABASE_PORT: 5432
             DATABASE_USER: lazyuser

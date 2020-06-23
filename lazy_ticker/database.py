@@ -183,6 +183,7 @@ class LazyDB:
                 query = (
                     session.query(WatchListTable)
                     .filter(WatchListTable.symbol == symbol)
+                    .order_by(WatchListTable.time.desc())
                     .one_or_none()
                 )
 

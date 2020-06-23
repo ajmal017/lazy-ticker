@@ -3,7 +3,7 @@ from lazy_ticker.database import LazyDB
 from lazy_ticker.paths import DATA_DIRECTORY
 
 import luigi
-from time import sleep
+from time import sleep, time
 from loguru import logger
 import pendulum
 import requests
@@ -76,10 +76,10 @@ def start_pipeline(timestamp):
         restore_users_table_state_from_previous_data()
 
     # TODO: Add workers to config
-    # TODO: WORKERS_PER_CPU config
+    # TODO: LUIGI_WORKERS_PER_CPU config
 
     twitter_scrape_successful = luigi.build(
-        [TwitterScraperPipline(timestamp=timestamp, users=users)], workers=4, local_scheduler=False
+        [TwitterScraperPipline(timestamp=timestamp, users=users)], workers=8, local_scheduler=False
     )
 
     if twitter_scrape_successful:
@@ -116,7 +116,10 @@ def start_task_loop(*, minute_interval: int):
                 while pendulum.now("UTC") < period:
                     sleep(1)
                 else:
+                    start_time = time()
                     start_pipeline(period.int_timestamp)
+                    end_time = time()
+                    logger.debug(f"Took {end_time- start_time} seconds to run.")
 
 
 def wait(seconds):

@@ -50,6 +50,7 @@ class InstrumentSchema(pydantic.BaseModel):
         orm_mode = True
         allow_population_by_field_name = True
 
+    # TODO: split inverted from normal
     def get_tradingview_ticker(self, include_inverted: bool = True) -> List[str]:
         exchange = self.exchange.convert_to_tradingview_exchange()
         if exchange:

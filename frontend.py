@@ -1,4 +1,3 @@
-# from lazy_ticker import core  # used for testing paths
 from fastapi import FastAPI, Request, Response, Path, status
 from fastapi.responses import FileResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
@@ -35,24 +34,6 @@ templates = Jinja2Templates(directory="templates")
 async def index(request: Request, time_period: TimePeriod = TimePeriod.MONTHS):
     return RedirectResponse(f"/watchlist/{time_period.value}")
 
-    # watchlist = backend_api.get_watchlist(time_period.value)
-    # recent_ticker = backend_api.get_latest_ticker()
-    #
-    # instrument = InstrumentSchema(**recent_ticker.json())
-    # tradingview = instrument.get_tradingview_ticker(include_inverted=False)[0]
-    #
-    # return templates.TemplateResponse(
-    #     "index.html",
-    #     {
-    #         "request": request,
-    #         "watchlist": watchlist.json(),
-    #         "time_periods": TimePeriod,
-    #         "current_period": time_period,
-    #         "recent_instrument": instrument,
-    #         "tradingview": tradingview,
-    #     },
-    # )
-
 
 @app.get("/watchlist/{time_period}")
 async def index(request: Request, time_period: TimePeriod = TimePeriod.MONTHS):
@@ -77,7 +58,7 @@ async def index(request: Request, time_period: TimePeriod = TimePeriod.MONTHS):
 
 def generate_file_response(query: InstrumentsList, filename: str):
     random_id = uuid.uuid4().hex
-    temp_file = f"/tmp/{random_id}.txt"  # UUID, caching withn x time
+    temp_file = f"/tmp/{random_id}.txt"
     with open(temp_file, mode="w") as write_file:
         query = ",".join([str(q) for q in query])
         write_file.write(query)
