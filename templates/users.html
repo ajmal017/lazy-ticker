@@ -1,6 +1,33 @@
 {% extends "base.html" %}
 
 {% block content %}
+
+
+<div class="container">
+    <div class="ui raised padded text container segment">
+        <a href="/">
+            <div class="ui primary submit button">Back to Watchlist</div>
+        </a>
+    </div>
+</div>
+</br>
+
+<div class="container">
+    <div class="ui raised padded text container segment">
+        <h3 class="ui header">Add User</h3>
+        <form class="ui form" action="/add_user" method="get">
+            <div class="field">
+                <label>Username</label>
+                <input type="text" name="username" placeholder="@dgnsrekt">
+            </div>
+            <button class="ui primary submit button" type="submit">Submit</button>
+        </form>
+    </div>
+</div>
+</br>
+
+
+
 <div class="container">
 
     <div class="ui raised padded text container segment">
@@ -9,7 +36,7 @@
         {% for user in all_users%}
 
         <div class="ui raised padded text container segment">
-            {{ user["name"].lower()}}
+            <a href="https://twitter.com/@{{ user["name"].lower()}}">@{{ user["name"].lower()}}</a>
         </div>
         {% endfor %}
     </div>

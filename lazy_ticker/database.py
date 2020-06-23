@@ -91,7 +91,7 @@ class LazyDB:
     @classmethod
     def get_all_users(cls):
         with cls.session_manager() as session:
-            return session.query(TwitterUsersTable).order_by("date").all()
+            return session.query(TwitterUsersTable).order_by(TwitterUsersTable.date.desc()).all()
 
     @classmethod
     def add_tweets(cls, tweets: List[dict]):
