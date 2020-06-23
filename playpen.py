@@ -189,3 +189,10 @@ for user in LazyDB.get_all_users():
     print(user.last_tweet_id)
     print(user.name)
     print(user)
+from time import sleep
+from random import random
+
+while True:
+    t = random()
+    print(t)
+    sleep(t)
