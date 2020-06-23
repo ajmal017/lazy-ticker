@@ -1,92 +1,129 @@
 {% extends "base.html" %}
 
-{% block add_user %}
-<div class="ui message">
-    <div class="ui fluid massive icon input">
-        <input type="text" id="add_user_input" placeholder="Add User">
-        <button class="ui massive button" id="add_user_button">ADD</button>
-    </div>
-</div>
-{% endblock %}
+{% block content %}
 
-{% block trading_view %}
-<div class="ui message">
-    <!-- TradingView Widget BEGIN -->
-    <div class="tradingview-widget-container">
-        <div class="tradingview-widget-container__widget"></div>
-        <div class="tradingview-widget-copyright"><a href="https://www.tradingview.com/symbols/{{instrument.symbol}}/" rel="noopener" target="_blank"><span class="blue-text">{{instrument.symbol}} Symbol Info</span></a> by TradingView</div>
-        <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-symbol-info.js" async>
-            {
-                "symbol": "{{tradingview}}",
-                "width": "100%",
-                "locale": "en",
-                "colorTheme": "light",
-                "isTransparent": true
-            }
-        </script>
+
+<div class="container">
+    <div class="ui raised padded text container segment">
+        <h3 class="ui header">Add twitter user to database</h3>
+        <form class="ui form" action="/add_user" method="get">
+            <div class="field">
+                <label>Username</label>
+                <input type="text" name="username" placeholder="@dgnsrekt">
+            </div>
+            <button class="ui primary submit button" type="submit">Submit</button>
+        </form>
     </div>
 </div>
+</br>
+
+
+
+
+
 <!-- TradingView Widget END -->
 
-{% endblock %}
+<div class="container">
+    <div class="ui raised padded text container segment">
+        <h3 class="ui header">Latest unique ticker</h3>
 
+        <div class="ui message">
+            <!-- TradingView Widget BEGIN -->
+            <div class="tradingview-widget-container">
+                <div class="tradingview-widget-container__widget"></div>
+                <div class="tradingview-widget-copyright"><a href="https://www.tradingview.com/symbols/{{instrument.symbol}}/" rel="noopener" target="_blank"><span class="blue-text">{{instrument.symbol}} Symbol Info</span></a> by TradingView</div>
+                <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-symbol-info.js" async>
+                    {
+                        "symbol": "{{tradingview}}",
+                        "width": "100%",
+                        "locale": "en",
+                        "colorTheme": "light",
+                        "isTransparent": true
+                    }
+                </script>
+            </div>
+        </div>
 
-
-{% block watchlist %}
-<div class="ui top attached tabular menu">
-
-    {% for time in time_periods %}
-
-    {% if time.value == current_period.value %}
-
-    <a class="item active" href="{{ time.value }}">
-        {{ time.value }}
-    </a>
-    {% else %}
-
-    <a class="item" href="{{ time.value }}">
-        {{ time.value }}
-    </a>
-    {% endif %}
-    {% endfor %}
+    </div>
 </div>
+</br>
+
+<div class="container">
+
+    <div class="ui right raised padded text container segment">
+
+        <form class="" action="/watchlist/{{current_period.value}}/download?inverted=false" method="get">
+            <button class="ui download primary button" id="download_button">Download {{current_period.value.replace("s", "").title()}} Watchlist </button>
+        </form>
+
+        </br>
+
+        <form class="" action="/watchlist/{{current_period.value}}/download" method="get">
+            <input type="hidden" name="inverted" value="true" />
+            <button class="ui download primary button" id="download_button_inverted">Download Inverted {{current_period.value.replace("s", "").title()}} Watchlist </button>
+        </form>
+
+        <h3 class="ui header">Watchlist</h3>
+        Found {{ watchlist_lenght }} ticker symbols within a period of one {{ current_period.value.replace("s", "")}} ago and the current time.
 
 
-<div class="ui bottom attached segment">
-    <table class="attached ui celled selectable table">
-        <!-- <table class="ui celled table"> -->
-        <thead>
-            <tr>
-                <th>Symbol</th>
-                <th>Exchange</th>
-                <th>Description</th>
-            </tr>
-        </thead>
 
-        {% for instrument in watchlist["instruments"] %}
+        <div class="ui top attached tabular menu">
 
-        <tbody>
-            <tr>
+            {% for time in time_periods %}
 
-                <td data-label="Symbol">
-                    {{ instrument.symbol }}
-                </td>
+            {% if time.value == current_period.value %}
 
-                <td data-label="Exchange">
-                    {{ instrument.exchange }}
-                </td>
+            <a class="item active" href="{{ time.value }}">
+                {{ time.value }}
+            </a>
+            {% else %}
 
-                <td data-label="Description">
-                    {{ instrument.description.title() }}
-                </td>
-            </tr>
-        </tbody>
+            <a class="item" href="{{ time.value }}">
+                {{ time.value }}
+            </a>
+            {% endif %}
+            {% endfor %}
+        </div>
 
-        {% endfor %}
-    </table>
 
+        <div class="ui bottom attached segment">
+            <table class="attached ui celled selectable table">
+                <!-- <table class="ui celled table"> -->
+                <thead>
+                    <tr>
+                        <th>Symbol</th>
+                        <th>Exchange</th>
+                        <th>Description</th>
+                    </tr>
+                </thead>
+
+                {% for instrument in watchlist["instruments"] %}
+
+                <tbody>
+                    <tr>
+
+                        <td data-label="Symbol">
+                            {{ instrument.symbol }}
+                        </td>
+
+                        <td data-label="Exchange">
+                            {{ instrument.exchange }}
+                        </td>
+
+                        <td data-label="Description">
+                            {{ instrument.description.title() }}
+                        </td>
+                    </tr>
+                </tbody>
+
+                {% endfor %}
+            </table>
+
+        </div>
+
+    </div>
 </div>
-
 {% endblock %}
 
 

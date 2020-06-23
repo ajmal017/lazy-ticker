@@ -8,6 +8,8 @@ services:
             context: .
             dockerfile: frontend.dockerfile
         restart: always
+        volumes:
+            - .:/app
         ports:
             - 80:80
         networks:
@@ -16,6 +18,7 @@ services:
             WORKERS_PER_CORE: 0.5
         depends_on:
             - backend
+        # entrypoint: ["/start-reload.sh"]
 
     backend:
         build:

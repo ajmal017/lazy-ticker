@@ -51,27 +51,25 @@ class InstrumentSchema(pydantic.BaseModel):
         allow_population_by_field_name = True
 
     # TODO: split inverted from normal
-    def get_tradingview_ticker(self, include_inverted: bool = True) -> List[str]:
+    def get_tradingview_ticker(self, inverted: bool = False) -> List[str]:
         exchange = self.exchange.convert_to_tradingview_exchange()
         if exchange:
-            tickers = [f"{exchange}:{self.symbol}"]
-            if include_inverted:
-                tickers += [f"0-{exchange}:{self.symbol}"]
+            ticker = f"{exchange}:{self.symbol}"
         else:
-            tickers = [f"{self.symbol}"]
-            if include_inverted:
-                tickers += [f"0-{self.symbol}"]
+            ticker = f"{self.symbol}"
 
-        return tickers
+        if inverted:
+            ticker = f"0-{ticker}"
+        return ticker
 
 
 class InstrumentsList(pydantic.BaseModel):
     instruments: List[InstrumentSchema]
 
-    def create_list_tickers(self):
+    def create_list_tickers(self, *, inverted: bool = False):
         tickers = []
-        for i in self.instruments:
-            tickers += i.get_tradingview_ticker()
+        for ticker in self.instruments:
+            tickers.append(ticker.get_tradingview_ticker(inverted=inverted))
         else:
             return tickers
 

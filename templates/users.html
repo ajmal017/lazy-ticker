@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container">
+
+    <div class="ui raised padded text container segment">
+        <h3> Users Watchlist </h3>
+        Currently watching {{ users_amount }} user.
+        {% for user in all_users%}
+
+        <div class="ui raised padded text container segment">
+            {{ user["name"].lower()}}
+        </div>
+        {% endfor %}
+    </div>
+
+</div>
+</br>
+{% endblock %}

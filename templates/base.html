@@ -23,40 +23,8 @@
                 </div>
 
                 </br>
-                <!-- <div class="container">
-                    <div class="ui raised padded text container segment">
-                        <h3 class="ui header">Add twitter user to database</h3>
-                        {% block add_user %}
-                        {% endblock%}
-                    </div>
-                </div>
-                </br> -->
-
-                <div class="container">
-                    <div class="ui raised padded text container segment">
-                        <h3 class="ui header">Latest unique ticker</h3>
-                        {% block trading_view %}
-                        {% endblock%}
-                    </div>
-                </div>
-                </br>
-
-                <div class="container">
-
-                    <div class="ui right raised padded text container segment">
-
-                        <form class="" action="/watchlist/{{current_period.value}}/download" method="get">
-                            <button class="ui download primary button" id="download_button">Download {{current_period.value.replace("s", "").title()}} Watchlist </button>
-                        </form>
-                        <h3 class="ui header">Watchlist
-
-
-                        </h3>
-                        Ticker symbols found looking back one {{ current_period.value.replace("s", "")}} before the current time.
-                        {% block watchlist %}
-                        {% endblock%}
-                    </div>
-                </div>
+                {% block content %}
+                {% endblock %}
 
             </div>
         </div>
@@ -64,14 +32,12 @@
     </body>
 
     <script type="text/javascript">
-        $(document).ready(function() {
-            $(add_user_button).click(
-                function() {
-                    alert($(add_user_input));
+        $('.ui.form')
+            .form({
+                fields: {
+                    name: 'empty'
                 }
-            );
-        });
-        //
+            }); //
         // $(document).ready(function() {
         //     $(download_button).click(
         //         function() {
