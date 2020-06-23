@@ -1,17 +1,19 @@
 {% extends "base.html" %}
 
-{% block content %}
 
+{% block title_button%}
 
 <div class="container">
-    <div class="ui raised padded text container segment">
-        <a href="/user_list">
-            <div class="ui primary submit button">Users list</div>
-        </a>
-    </div>
+    <a href="/user_list">
+        <div class="ui primary submit button">Userslist</div>
+    </a>
 </div>
-</br>
 
+
+{% endblock %}
+
+
+{% block content %}
 
 <div class="container">
     <div class="ui raised padded text container segment">
