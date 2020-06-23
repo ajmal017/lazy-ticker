@@ -36,7 +36,17 @@
         {% for user in all_users%}
 
         <div class="ui raised padded text container segment">
-            <a href="https://twitter.com/@{{ user["name"].lower()}}">@{{ user["name"].lower()}}</a>
+
+
+            <div class="ui two column grid">
+                <div class="column">
+                    <a href="https://twitter.com/@{{ user["name"].lower()}}">@{{ user["name"].lower()}}</a>
+                </div>
+                <div class="column">
+                    added: {{user["date"]}} UTC
+                </div>
+
+            </div>
         </div>
         {% endfor %}
     </div>
