@@ -89,6 +89,17 @@ class LazyDB:
             session.commit()
 
     @classmethod
+    def update_users_symbol_count_column(cls, user_id: str, symbol_count: int):
+        with cls.session_manager() as session:
+            query = (
+                session.query(TwitterUsersTable)
+                .filter(TwitterUsersTable.user_id == user_id)
+                .one_or_none()
+            )
+            query.symbol_count = symbol_count
+            session.commit()
+
+    @classmethod
     def get_all_users(cls):
         with cls.session_manager() as session:
             return session.query(TwitterUsersTable).order_by(TwitterUsersTable.date.desc()).all()
@@ -237,3 +248,13 @@ class LazyDB:
     def get_most_recent_unique_ticker(cls):
         with cls.session_manager() as session:
             return session.query(InstrumentsTable).order_by(InstrumentsTable.date.desc()).first()
+
+    @classmethod
+    def get_user_symbol_count(cls, user_id):
+        with cls.session_manager() as session:
+            query = (
+                session.query(TwitterSymbolsTable)
+                .filter(TwitterSymbolsTable.user_id == user_id)
+                .all()
+            )
+            return len(list(set(row.symbol for row in query)))

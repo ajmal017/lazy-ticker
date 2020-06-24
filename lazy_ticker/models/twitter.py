@@ -13,6 +13,7 @@ class TwitterUsersTable(TwitterModelBase):
     user_id = Column(BigInteger, index=True, unique=True)
     date = Column(DateTime, default=datetime.utcnow)
     last_tweet_id = Column(BigInteger, nullable=True, unique=True)
+    symbol_count = Column(Integer, nullable=True)
 
     def __repr__(self):
         return f"<{self.name}>"
