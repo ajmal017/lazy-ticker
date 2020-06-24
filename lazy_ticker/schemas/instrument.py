@@ -24,6 +24,7 @@ class Exchange(str, Enum):
     NASDAQ = "NASDAQ"
     PACIFIC = "Pacific"
     PINK = "Pink Sheet"
+    MUTUAL_FUND = "Mutual Fund"
     UNKOWN = "Unknown"
 
     def convert_to_tradingview_exchange(self) -> Optional[str]:
