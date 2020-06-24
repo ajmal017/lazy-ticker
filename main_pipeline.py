@@ -78,6 +78,14 @@ def build_watchlist_table():
     logger.info("building watchlist complete.")
 
 
+def update_users_symbol_count():
+    all_users = LazyDB.get_all_users()
+
+    for user in all_users:
+        user_count = LazyDB.get_user_symbol_count(user.user_id)
+        LazyDB.update_users_symbol_count_column(user.user_id, user_count)
+
+
 def start_pipeline(timestamp):
     dt = pendulum.from_timestamp(timestamp, tz="UTC")
     date = dt.date()
@@ -104,6 +112,9 @@ def start_pipeline(timestamp):
         prepare_tables_for_watchlist()
         logger.debug("prepare_tables_for_watchlist complete!")
         build_watchlist_table()
+        logger.debug("updating user symbol count")
+        update_users_symbol_count()
+        logger.debug("updating user count complete!")
     else:
         logger.debug("notification of twitter scraping issue")
         # TODO notification of scraping unsuccesful.

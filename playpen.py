@@ -7,6 +7,15 @@ from time import time
 
 import re
 
+#
+all_users = LazyDB.get_all_users()
+
+for user in all_users:
+    user_count = LazyDB.get_user_symbol_count(user.user_id)
+    LazyDB.update_users_symbol_count_column(user.user_id, user_count)
+
+exit()
+
 
 def build_watchlist_table():
     tweets = LazyDB.get_all_tweets_sorted_by_published_time()

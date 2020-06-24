@@ -29,28 +29,49 @@
 
 
 <div class="container">
+    <div class="ui raised padded container segment">
 
-    <div class="ui raised padded text container segment">
         <h3> Users Watchlist </h3>
         Currently watching {{ users_amount }} user.
-        {% for user in all_users%}
 
-        <div class="ui raised padded text container segment">
+        <!-- <table class="attached ui celled selectable table"> -->
+        <table class="ui celled table">
+            <thead>
+                <tr>
+                    <th>Username</th>
+                    <th>Symbols Found</th>
+                    <th>Date added</th>
+                </tr>
+            </thead>
 
+            {% for user in all_users%}
 
-            <div class="ui two column grid">
-                <div class="column">
-                    <a href="https://twitter.com/@{{ user["name"].lower()}}">@{{ user["name"].lower()}}</a>
-                </div>
-                <div class="column">
-                    added: {{user["date"]}} UTC
-                </div>
+            <tbody>
+                <tr>
 
-            </div>
-        </div>
-        {% endfor %}
+                    <td data-label="Username">
+                        <a href="https://twitter.com/@{{ user["name"].lower()}}">
+                            @{{ user["name"].lower()}}
+                        </a>
+
+                    </td>
+
+                    <td data-label="Symbols Found">
+                        {{user["symbol_count"]}}
+                    </td>
+
+                    <td data-label="Date added">
+                        {{user["date"]}} UTC
+                    </td>
+                </tr>
+            </tbody>
+
+            {% endfor %}
+        </table>
+
     </div>
-
 </div>
+
 </br>
+
 {% endblock %}
