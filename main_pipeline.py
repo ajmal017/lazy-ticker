@@ -18,6 +18,15 @@ from time import time
 import re
 
 
+def wait(seconds):
+    logger.debug(f"sleeping for {seconds} seconds.")
+    for n in range(seconds, 0, -1):
+        logger.debug(f"{n}!")
+        sleep(1)
+    else:
+        logger.debug(f"go!")
+
+
 def divide_chunks(container, size):
     for position in range(0, len(container), size):
         yield container[position : position + size]
@@ -27,21 +36,28 @@ def divide_chunks(container, size):
 def prepare_tables_for_watchlist():
     logger.debug("prepare_tables_for_watchlist starts")
     valid_instruments = LazyDB.get_instruments()
+    logger.debug(f"Length of valid_instruments found: {len(valid_instruments)}")
 
     if valid_instruments:
-        LazyDB.update_tweet_validation_column(valid_instruments)
+        logger.debug("Valid instruments > 0, should update tweet_validation_column")
+        LazyDB.update_tweet_validation_column(valid_instruments, final_pass=False)
 
     unchecked_symbols = LazyDB.get_all_symbols_from_unchecked_tweets()
+    logger.debug(f"Found {len(unchecked_symbols)} unchecked symbols")
 
-    if unchecked_symbols:
+    if len(unchecked_symbols) > 0:
+        logger.debug(f"Found unchecked: {len(unchecked_symbols)} > 0")
         for chunk in divide_chunks(unchecked_symbols, 500):
+            logger.debug(f"getting {len(chunk)} from tda.")
             valid = get_instruments(chunk).dict()["instruments"]
+            logger.debug(f"Only {len(valid)} were valid symbols.")
             LazyDB.add_instruments(valid)
+            logger.debug(f"Only {len(valid)} should be added to the instruments DATABASE.")
 
         valid_instruments = LazyDB.get_instruments()
-        LazyDB.update_tweet_validation_column(valid_instruments)
+        LazyDB.update_tweet_validation_column(valid_instruments, final_pass=True)
 
-    LazyDB.delete_tweets_where_validation_column_is_false()
+    LazyDB.delete_tweets_where_validation_column_is_false()  # NOTE: maybe an issue.
 
 
 def restore_users_table_state_from_previous_data():
@@ -59,7 +75,7 @@ def build_watchlist_table():
     logger.info("building watchlist")
     tweets = LazyDB.get_all_tweets_sorted_by_published_time()
     LazyDB.add_to_watchlist(tweets)
-    logger.info("watchlist built")
+    logger.info("building watchlist complete.")
 
 
 def start_pipeline(timestamp):
@@ -74,6 +90,8 @@ def start_pipeline(timestamp):
         logger.info("User table is empty.")
         logger.info("Attempting to restore users table state from previous data")
         restore_users_table_state_from_previous_data()
+        users = LazyDB.get_all_users()
+        wait(10)
 
     # TODO: Add workers to config
     # TODO: LUIGI_WORKERS_PER_CPU config
@@ -118,15 +136,6 @@ def start_task_loop(*, minute_interval: int):
                     start_pipeline(period.int_timestamp)
                     end_time = time()
                     logger.debug(f"Took {end_time- start_time} seconds to run.")
-
-
-def wait(seconds):
-    logger.debug(f"sleeping for {seconds} seconds.")
-    for n in range(seconds, 0, -1):
-        logger.debug(f"{n}!")
-        sleep(1)
-    else:
-        logger.debug(f"go!")
 
 
 if __name__ == "__main__":

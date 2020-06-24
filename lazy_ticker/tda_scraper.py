@@ -54,4 +54,5 @@ def get_instruments(symbols: List[str]) -> InstrumentsList:
         return InstrumentsList(instruments=instruments)
     except ValidationError as e:
         logger.error(e)
-        logger.error(data)
+        logger.error(json_data)
+        raise e

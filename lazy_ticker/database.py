@@ -122,16 +122,18 @@ class LazyDB:
                 return True
 
     @classmethod
-    def update_tweet_validation_column(cls, valid_symbols: List[str]):
+    def update_tweet_validation_column(cls, valid_symbols: List[str], final_pass: bool):
         with cls.session_manager() as session:
             for row in session.query(TwitterSymbolsTable).filter(
                 TwitterSymbolsTable.valid == None
             ):
                 if row.symbol in valid_symbols:
                     row.valid = True
+                    session.commit()
                 else:
-                    row.valid = False
-                session.commit()
+                    if final_pass:
+                        row.valid = False
+                        session.commit()
 
     @classmethod
     def delete_tweets_where_validation_column_is_false(cls):

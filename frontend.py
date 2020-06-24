@@ -52,7 +52,7 @@ async def index(request: Request, time_period: TimePeriod = TimePeriod.MONTHS):
     recent_ticker = backend_api.get_latest_ticker()
     following = backend_api.get_all_users()
 
-    instrument = InstrumentSchema(**recent_ticker.json())
+    instrument = InstrumentSchema(**recent_ticker.json())  # BUG: issue here when empty
     tradingview = instrument.get_tradingview_ticker(inverted=False)[0]
 
     return templates.TemplateResponse(
