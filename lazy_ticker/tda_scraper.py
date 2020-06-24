@@ -12,6 +12,7 @@ from pydantic import validate_arguments
 from pydantic.error_wrappers import ValidationError
 from loguru import logger
 
+from requests.exceptions import HTTPError
 
 TOKEN_PATH = PROJECT_ROOT / "token.pickle"
 
@@ -45,14 +46,16 @@ def get_instruments(symbols: List[str]) -> InstrumentsList:
         symbols, projection=TDAClient.Instrument.Projection.SYMBOL_SEARCH,
     )
 
-    assert response.ok, response.raise_for_status()
-
-    json_data = list(response.json().values())
-
     try:
+        assert response.ok, response.raise_for_status()
+        json_data = list(response.json().values())
         instruments = [InstrumentSchema(**data) for data in json_data]
         return InstrumentsList(instruments=instruments)
     except ValidationError as e:
         logger.error(e)
         logger.error(json_data)
+        raise e
+    except HTTPError as e:
+        logger.error(e)
+        logger.error(symbols)
         raise e
