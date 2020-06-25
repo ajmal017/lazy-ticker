@@ -1,6 +1,6 @@
 from lazy_ticker.pipeline import TwitterScraperPipline
 from lazy_ticker.database import LazyDB
-from lazy_ticker.paths import DATA_DIRECTORY
+from lazy_ticker.paths import DATA_DIRECTORY, USER_BATCH_FILE
 
 import luigi
 from time import sleep, time
@@ -67,6 +67,20 @@ def restore_users_table_state_from_previous_data():
 
         for user in users:
             logger.debug(f"restoring {user} from previous state.")
+            resp = requests.post(f"http://backend:5001/user/{user.strip()}")
+            assert resp.status_code == 201
+
+
+def batch_add_users():
+    if USER_BATCH_FILE.exists():
+        with open(USER_BATCH_FILE) as file:
+            data = file.readlines()
+
+        # TODO: add config flag
+
+        for user in data:
+            logger.debug(f"adding {user} from batch file.")
+            user = user.strip("\n").strip()
             resp = requests.post(f"http://backend:5001/user/{user}")
             assert resp.status_code == 201
 
@@ -98,6 +112,7 @@ def start_pipeline(timestamp):
         logger.info("User table is empty.")
         logger.info("Attempting to restore users table state from previous data")
         restore_users_table_state_from_previous_data()
+        batch_add_users()
         users = LazyDB.get_all_users()
         wait(10)
 
