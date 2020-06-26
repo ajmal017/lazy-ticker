@@ -9,6 +9,10 @@ from typing import List
 import uplink
 import uuid
 
+from mimesis.schema import Field, Schema
+from mimesis.enums import Gender
+from random import choice
+
 
 class API(uplink.Consumer):
     @uplink.get("watchlist/{time_period}/")
@@ -109,6 +113,37 @@ async def download_watchlist(time_period: TimePeriod, inverted: bool = False):
         return generate_file_response(response_list, time_period.value, inverted=inverted)
     else:
         return generate_file_response(["EMPTY"], time_period.value, inverted=inverted)
+
+
+@app.get("/watchlist/{time_period}/json")
+async def download_watchlist(time_period: TimePeriod, inverted: bool = False):
+    watchlist = backend_api.get_watchlist(time_period.value)
+    return watchlist.json()
+
+
+@app.get("/{random}")
+async def echo(random: str):
+
+    locales = ["en", "cs", "da", "en-au", "en-ca", "et", "es", "it", "ja", "ko", "nl"]
+
+    _ = Field(choice(locales))
+    description = lambda: {
+        "id": _("uuid"),
+        "name": _("text.word"),
+        "version": _("version", pre_release=True),
+        "timestamp": _("timestamp", posix=False),
+        "owner": {
+            "email": _("person.email", domains=["google.com", "yahoo.com"], key=str.lower),
+            "token": _("token_hex"),
+            "creator": _("full_name", gender=Gender.FEMALE),
+        },
+        "filename": f"/{random}",
+    }
+    schema = Schema(schema=description)
+
+    message = {"message": schema.create(iterations=1)}
+    print(message)
+    return message
 
 
 def clean_username(username: str) -> str:
