@@ -13,7 +13,7 @@ class InstrumentsTable(InstrumentBaseModel):
     __tablename__ = "instruments"
 
     id = Column(Integer, index=True, primary_key=True)
-    cusip = Column(String, unique=True)
+    cusip = Column(String, nullable=True)
     symbol = Column(String, unique=True)
     description = Column(String)
     exchange = Column(String, index=True)

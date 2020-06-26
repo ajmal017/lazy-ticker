@@ -41,7 +41,7 @@ class Exchange(str, Enum):
 
 
 class InstrumentSchema(pydantic.BaseModel):
-    cusip: str
+    cusip: Optional[str] = None
     symbol: str
     description: str
     exchange: Exchange
