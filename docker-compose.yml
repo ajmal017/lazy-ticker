@@ -46,8 +46,8 @@ services:
             POSTGRES_DB: lazydb
             POSTGRES_USER: lazyuser
             POSTGRES_PASSWORD: lazysecret
-        ports:
-            - 5432:5432
+            #        ports:
+            #- 5432:5432
         command: ["-c", "log_error_verbosity=terse"]
         networks:
             - lazy_network
@@ -55,8 +55,8 @@ services:
     luigi_daemon:
         image: axiom/docker-luigi:2.8.13
         restart: always
-        ports:
-            - 8082:8082
+        #ports:
+        #    - 8082:8082
         networks:
             - lazy_network
         volumes:
