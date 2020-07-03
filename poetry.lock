@@ -692,6 +692,14 @@ version = "3.3"
 
 [[package]]
 category = "main"
+description = "Python Finite State Machines made easy."
+name = "python-statemachine"
+optional = false
+python-versions = "*"
+version = "0.8.0"
+
+[[package]]
+category = "main"
 description = "The Olson timezone database for Python."
 name = "pytzdata"
 optional = false
@@ -1077,7 +1085,7 @@ version = "1.0.1"
 dev = ["pytest (>=4.6.2)", "black (>=19.3b0)"]
 
 [metadata]
-content-hash = "8b60f17afc32fc10255c1e6ce2ea9f5f82b6eeaead936aa08da49a436cb520b3"
+content-hash = "f900893d7bf247cf8fb559276e63f78bca2ad01b48ab28f66ec1333dee7560d5"
 python-versions = "^3.8"
 
 [metadata.files]
@@ -1436,6 +1444,10 @@ python-dateutil = [
 ]
 python-decouple = [
     {file = "python-decouple-3.3.tar.gz", hash = "sha256:55c546b85b0c47a15a47a4312d451a437f7344a9be3e001660bccd93b637de95"},
+]
+python-statemachine = [
+    {file = "python-statemachine-0.8.0.tar.gz", hash = "sha256:f6a70c1f4ed8b1198487eac09114ec9ea1166be6d793996f8c1b92d590a9ebae"},
+    {file = "python_statemachine-0.8.0-py2.py3-none-any.whl", hash = "sha256:b816ec61639ddd3b1d3a8ad06a62840d30b9e7176b4b94fc183cebd1c7d5caf2"},
 ]
 pytzdata = [
     {file = "pytzdata-2019.3-py2.py3-none-any.whl", hash = "sha256:84c52b9a47d097fcd483f047a544979de6c3a86e94c845e3569e9f8acd0fa071"},
