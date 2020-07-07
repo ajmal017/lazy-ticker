@@ -19,6 +19,7 @@ class AssetType(str, Enum):
 class Exchange(str, Enum):
     AMEX = "AMEX"
     BATS = "BATS"
+    EQY = "EQY"
     IND = "IND"
     NYSE = "NYSE"
     NASDAQ = "NASDAQ"

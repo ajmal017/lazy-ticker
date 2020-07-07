@@ -54,7 +54,12 @@ def get_instruments(symbols: List[str]) -> InstrumentsList:
     try:
         assert response.ok, response.raise_for_status()
         json_data = list(response.json().values())
+
         instruments = [InstrumentSchema(**data) for data in json_data]
+        # TODO move out of list comp indepent try except for each.
+        # will give the ability to skip bad schema.
+        # maybe add the bad schema ValidationErrors to an error log
+        # luigi_pipeline_1  | pydantic.error_wrappers.ValidationError: 1 validation error for InstrumentSchema
         return InstrumentsList(instruments=instruments)
     except ValidationError as e:
         logger.error(e)
