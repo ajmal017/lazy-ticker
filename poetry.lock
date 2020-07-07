@@ -861,6 +861,20 @@ selenium = "*"
 websockets = "*"
 
 [[package]]
+category = "main"
+description = "Retry code until it succeeds"
+name = "tenacity"
+optional = false
+python-versions = "*"
+version = "6.2.0"
+
+[package.dependencies]
+six = ">=1.9.0"
+
+[package.extras]
+doc = ["reno", "sphinx", "tornado (>=4.5)"]
+
+[[package]]
 category = "dev"
 description = "ANSII Color formatting for output in terminal."
 name = "termcolor"
@@ -1085,7 +1099,7 @@ version = "1.0.1"
 dev = ["pytest (>=4.6.2)", "black (>=19.3b0)"]
 
 [metadata]
-content-hash = "f900893d7bf247cf8fb559276e63f78bca2ad01b48ab28f66ec1333dee7560d5"
+content-hash = "4562b30716b965c3e1e542a85f70f42685fb38c3d67b39d8546f9f0dd78b8a29"
 python-versions = "^3.8"
 
 [metadata.files]
@@ -1559,6 +1573,10 @@ starlette = [
 tda-api = [
     {file = "tda-api-0.3.2.tar.gz", hash = "sha256:f85eb99bb0e806b60dce7a514ee84cb1af233862d336837cb8c38ba6f96fba28"},
     {file = "tda_api-0.3.2-py3-none-any.whl", hash = "sha256:038c5a55fe61d91862344f995a252f9523cd75cc38d6e6a1fb2eb2f34b7d1b81"},
+]
+tenacity = [
+    {file = "tenacity-6.2.0-py2.py3-none-any.whl", hash = "sha256:5a5d3dcd46381abe8b4f82b5736b8726fd3160c6c7161f53f8af7f1eb9b82173"},
+    {file = "tenacity-6.2.0.tar.gz", hash = "sha256:29ae90e7faf488a8628432154bb34ace1cca58244c6ea399fd33f066ac71339a"},
 ]
 termcolor = [
     {file = "termcolor-1.1.0.tar.gz", hash = "sha256:1d6d69ce66211143803fbc56652b41d73b4a400a2891d7bf7a1cdf4c02de613b"},

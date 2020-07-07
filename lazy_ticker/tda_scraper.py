@@ -14,6 +14,8 @@ from loguru import logger
 
 from requests.exceptions import HTTPError
 
+from tenacity import retry, wait_random_exponential, retry_if_exception_type
+
 TOKEN_PATH = PROJECT_ROOT / "token.pickle"
 
 
@@ -38,6 +40,9 @@ def authenticate_client():
 
 
 @validate_arguments
+@retry(
+    wait=wait_random_exponential(multiplier=1, max=60), retry=retry_if_exception_type(HTTPError)
+)
 def get_instruments(symbols: List[str]) -> InstrumentsList:
     assert len(symbols) <= 500
     api = authenticate_client()

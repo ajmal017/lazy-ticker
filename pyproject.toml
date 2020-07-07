@@ -24,6 +24,7 @@ loguru = "^0.5.1"
 notifiers = "^1.2.1"
 jinja2 = "^2.11.2"
 python-statemachine = "^0.8.0"
+tenacity = "^6.2.0"
 
 [tool.poetry.dev-dependencies]
 black = "^19.10b0"
