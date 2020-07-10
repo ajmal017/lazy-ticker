@@ -47,11 +47,12 @@ def prepare_tables_for_watchlist():
 
     if len(unchecked_symbols) > 0:
         logger.debug(f"Found unchecked: {len(unchecked_symbols)} > 0")
+        unchecked_symbols = list(filter(None, unchecked_symbols))
         for chunk in divide_chunks(unchecked_symbols, 500):
             logger.debug(f"getting {len(chunk)} from tda.")
-            valid = get_instruments(chunk).dict()["instruments"]
+            valid = get_instruments(chunk).dict()
             logger.debug(f"Only {len(valid)} were valid symbols.")
-            LazyDB.add_instruments(valid)
+            LazyDB.add_instruments(valid["instruments"])
             logger.debug(f"Only {len(valid)} should be added to the instruments DATABASE.")
 
         valid_instruments = LazyDB.get_instruments()
@@ -167,4 +168,4 @@ def start_task_loop(*, minute_interval: int):
 if __name__ == "__main__":
     wait(10)
     # TODO: Configuration.task_execution_interval
-    start_task_loop(minute_interval=5)
+    start_task_loop(minute_interval=1)

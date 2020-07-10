@@ -40,11 +40,10 @@ def authenticate_client():
 
 
 @validate_arguments
-@retry(
-    wait=wait_random_exponential(multiplier=1, max=60), retry=retry_if_exception_type(HTTPError)
-)
+@retry(wait=wait_random_exponential(multiplier=1, max=2), retry=retry_if_exception_type(HTTPError))
 def get_instruments(symbols: List[str]) -> InstrumentsList:
     assert len(symbols) <= 500
+
     api = authenticate_client()
 
     response = api.search_instruments(
