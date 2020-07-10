@@ -168,4 +168,4 @@ def start_task_loop(*, minute_interval: int):
 if __name__ == "__main__":
     wait(10)
     # TODO: Configuration.task_execution_interval
-    start_task_loop(minute_interval=1)
+    start_task_loop(minute_interval=5)
