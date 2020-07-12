@@ -14,6 +14,8 @@ from loguru import logger
 
 from requests.exceptions import HTTPError
 
+from tenacity import retry, wait_random_exponential, retry_if_exception_type
+
 TOKEN_PATH = PROJECT_ROOT / "token.pickle"
 
 
@@ -38,8 +40,10 @@ def authenticate_client():
 
 
 @validate_arguments
+@retry(wait=wait_random_exponential(multiplier=1, max=2), retry=retry_if_exception_type(HTTPError))
 def get_instruments(symbols: List[str]) -> InstrumentsList:
     assert len(symbols) <= 500
+
     api = authenticate_client()
 
     response = api.search_instruments(
@@ -49,7 +53,12 @@ def get_instruments(symbols: List[str]) -> InstrumentsList:
     try:
         assert response.ok, response.raise_for_status()
         json_data = list(response.json().values())
+
         instruments = [InstrumentSchema(**data) for data in json_data]
+        # TODO move out of list comp indepent try except for each.
+        # will give the ability to skip bad schema.
+        # maybe add the bad schema ValidationErrors to an error log
+        # luigi_pipeline_1  | pydantic.error_wrappers.ValidationError: 1 validation error for InstrumentSchema
         return InstrumentsList(instruments=instruments)
     except ValidationError as e:
         logger.error(e)

@@ -25,6 +25,8 @@ DATABASE_URI = Configuration.get_database_uri()
 
 
 class LazyDB:
+    Session = None
+
     @staticmethod
     def create_session():
         engine = create_engine(DATABASE_URI)
@@ -36,9 +38,11 @@ class LazyDB:
     @classmethod
     @contextmanager
     def session_manager(cls):
-        Session = cls.create_session()
 
-        session = Session()
+        if cls.Session is None:
+            cls.Session = cls.create_session()
+
+        session = cls.Session()
         try:
             yield session
         except:

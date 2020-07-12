@@ -692,6 +692,14 @@ version = "3.3"
 
 [[package]]
 category = "main"
+description = "Python Finite State Machines made easy."
+name = "python-statemachine"
+optional = false
+python-versions = "*"
+version = "0.8.0"
+
+[[package]]
+category = "main"
 description = "The Olson timezone database for Python."
 name = "pytzdata"
 optional = false
@@ -851,6 +859,20 @@ python-dateutil = "*"
 requests-oauthlib = "*"
 selenium = "*"
 websockets = "*"
+
+[[package]]
+category = "main"
+description = "Retry code until it succeeds"
+name = "tenacity"
+optional = false
+python-versions = "*"
+version = "6.2.0"
+
+[package.dependencies]
+six = ">=1.9.0"
+
+[package.extras]
+doc = ["reno", "sphinx", "tornado (>=4.5)"]
 
 [[package]]
 category = "dev"
@@ -1077,7 +1099,7 @@ version = "1.0.1"
 dev = ["pytest (>=4.6.2)", "black (>=19.3b0)"]
 
 [metadata]
-content-hash = "8b60f17afc32fc10255c1e6ce2ea9f5f82b6eeaead936aa08da49a436cb520b3"
+content-hash = "4562b30716b965c3e1e542a85f70f42685fb38c3d67b39d8546f9f0dd78b8a29"
 python-versions = "^3.8"
 
 [metadata.files]
@@ -1437,6 +1459,10 @@ python-dateutil = [
 python-decouple = [
     {file = "python-decouple-3.3.tar.gz", hash = "sha256:55c546b85b0c47a15a47a4312d451a437f7344a9be3e001660bccd93b637de95"},
 ]
+python-statemachine = [
+    {file = "python-statemachine-0.8.0.tar.gz", hash = "sha256:f6a70c1f4ed8b1198487eac09114ec9ea1166be6d793996f8c1b92d590a9ebae"},
+    {file = "python_statemachine-0.8.0-py2.py3-none-any.whl", hash = "sha256:b816ec61639ddd3b1d3a8ad06a62840d30b9e7176b4b94fc183cebd1c7d5caf2"},
+]
 pytzdata = [
     {file = "pytzdata-2019.3-py2.py3-none-any.whl", hash = "sha256:84c52b9a47d097fcd483f047a544979de6c3a86e94c845e3569e9f8acd0fa071"},
     {file = "pytzdata-2019.3.tar.gz", hash = "sha256:fac06f7cdfa903188dc4848c655e4adaee67ee0f2fe08e7daf815cf2a761ee5e"},
@@ -1547,6 +1573,10 @@ starlette = [
 tda-api = [
     {file = "tda-api-0.3.2.tar.gz", hash = "sha256:f85eb99bb0e806b60dce7a514ee84cb1af233862d336837cb8c38ba6f96fba28"},
     {file = "tda_api-0.3.2-py3-none-any.whl", hash = "sha256:038c5a55fe61d91862344f995a252f9523cd75cc38d6e6a1fb2eb2f34b7d1b81"},
+]
+tenacity = [
+    {file = "tenacity-6.2.0-py2.py3-none-any.whl", hash = "sha256:5a5d3dcd46381abe8b4f82b5736b8726fd3160c6c7161f53f8af7f1eb9b82173"},
+    {file = "tenacity-6.2.0.tar.gz", hash = "sha256:29ae90e7faf488a8628432154bb34ace1cca58244c6ea399fd33f066ac71339a"},
 ]
 termcolor = [
     {file = "termcolor-1.1.0.tar.gz", hash = "sha256:1d6d69ce66211143803fbc56652b41d73b4a400a2891d7bf7a1cdf4c02de613b"},

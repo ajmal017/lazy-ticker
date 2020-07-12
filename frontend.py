@@ -115,10 +115,24 @@ async def download_watchlist(time_period: TimePeriod, inverted: bool = False):
         return generate_file_response(["EMPTY"], time_period.value, inverted=inverted)
 
 
-@app.get("/watchlist/{time_period}/json")
+# TODO move to schemas
+class Ticker(pydantic.BaseModel):
+    symbol: str
+
+
+class Watchlist(pydantic.BaseModel):
+    instruments: List[Ticker]
+
+
+@app.get("/watchlist/{time_period}/tickers.json")
 async def download_watchlist(time_period: TimePeriod, inverted: bool = False):
     watchlist = backend_api.get_watchlist(time_period.value)
-    return watchlist.json()
+    watchlist = Watchlist(**watchlist.json())
+    tickers = []
+    for symbol in watchlist.instruments:
+        tickers.append(symbol.symbol)
+
+    return {"tickers": tickers}
 
 
 @app.get("/{random}")
