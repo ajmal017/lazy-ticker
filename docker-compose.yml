@@ -34,7 +34,7 @@ services:
             DATABASE_PORT: 5432
             DATABASE_USER: lazyuser
             DATABASE_PASSWORD: lazysecret
-            WORKERS_PER_CORE: 0.5
+            WORKERS_PER_CORE: 0.25
             PORT: 5001
         depends_on:
             - lazydb
